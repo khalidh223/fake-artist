@@ -1,8 +1,6 @@
 import Box from '@mui/material/Box'
 import HomeButtons from '@/components/home/HomeButtons'
 import fetchGameCode from '@/utils/fetchGameCode';
-import Image from 'next/image'
-import splashImage from '@/public/splash.png'
 
 export default async function Home() {
   const gameCode = await fetchGameCode()
@@ -16,9 +14,7 @@ export default async function Home() {
         flexDirection={'column'}
       >
         <Box display={"flex"} flexDirection={"column"} width={"371px"}>
-          <Box sx={{ maxWidth: '100%', maxHeight: '80vh' }}>
-            <Image src={splashImage} width={undefined} height={undefined} alt='splash image' />
-          </Box>
+          <img src={'/splash.png'} alt='splash image' style={{ maxWidth: '100%', maxHeight: '80vh' }} />
           <HomeButtons gameCode={gameCode} />
         </Box>
       </Box>
