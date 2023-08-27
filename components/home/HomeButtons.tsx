@@ -11,7 +11,7 @@ const HomeButton = styled(Button)({
     }
 })
 
-const HomeButtons = () => {
+const HomeButtons = ({ gameCode }: { gameCode: string | null }) => {
     const [dialogOpen, setDialogOpen] = useState(false)
     const handleOpenDialog = () => {
         setDialogOpen(true);
@@ -30,7 +30,7 @@ const HomeButtons = () => {
                     Join game
                 </HomeButton>
             </Stack>
-            <StartNewGameDialog open={dialogOpen} onClose={handleCloseDialog} />
+            <StartNewGameDialog open={dialogOpen} onClose={handleCloseDialog} gameCode={gameCode} />
         </>
     )
 }
