@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import TextField from '@mui/material/TextField';
 import Box from '@mui/material/Box'
 import { styled } from '@mui/material';
@@ -25,33 +25,44 @@ const StyledTextField = styled(TextField)({
 });
 
 const GameCodeInput: React.FC = () => {
-    const refs = Array.from({ length: 6 }).map(() => useRef<HTMLInputElement | null>(null));
+    const [values, setValues] = useState(Array(6).fill(''));
+    const [focusIndex, setFocusIndex] = useState<number | null>(null);
+    const focusRef = useRef<HTMLInputElement | null>(null);
+
+    useEffect(() => {
+        if (focusRef.current && focusIndex !== null) {
+            focusRef.current.focus();
+        }
+    }, [focusIndex]);
 
     const handleInputChange = (index: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
-        const value = event.target.value;
+        const newValues = [...values];
+        newValues[index] = event.target.value;
+        setValues(newValues);
 
-        if (value && refs[index + 1]) {
-            refs[index + 1].current?.focus();
+        if (event.target.value && index < 5) {
+            setFocusIndex(index + 1);
         }
     };
 
     const handleKeyDown = (index: number) => (event: React.KeyboardEvent) => {
-        if (event.key === 'Backspace' && refs[index].current?.value === '' && refs[index - 1]) {
-            refs[index - 1].current?.focus();
+        if (event.key === 'Backspace' && values[index] === '' && index > 0) {
+            setFocusIndex(index - 1);
         }
     };
 
     return (
         <Box display="flex" justifyContent="center" gap={1}>
-            {refs.map((ref, index) => (
+            {values.map((value, index) => (
                 <StyledTextField
                     key={index}
                     variant="outlined"
                     color="primary"
+                    value={value}
                     inputProps={{
                         maxLength: 1
                     }}
-                    inputRef={ref}
+                    inputRef={index === focusIndex ? focusRef : null}
                     onChange={handleInputChange(index)}
                     onKeyDown={handleKeyDown(index)}
                 />
