@@ -1,9 +1,9 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from 'react';
-import TextField from '@mui/material/TextField';
+import React, { useEffect, useRef, useState } from 'react'
+import TextField from '@mui/material/TextField'
 import Box from '@mui/material/Box'
-import { styled } from '@mui/material';
+import { styled } from '@mui/material'
 
 const StyledTextField = styled(TextField)({
     '& .MuiOutlinedInput-root': {
@@ -22,34 +22,43 @@ const StyledTextField = styled(TextField)({
         textAlign: 'center',
         fontSize: '20px'
     }
-});
+})
 
 const GameCodeInput: React.FC = () => {
-    const [values, setValues] = useState(Array(6).fill(''));
-    const [focusIndex, setFocusIndex] = useState<number | null>(null);
-    const focusRef = useRef<HTMLInputElement | null>(null);
+    const [values, setValues] = useState(Array(6).fill(''))
+    const [focusIndex, setFocusIndex] = useState<number | null>(null)
+    const focusRef = useRef<HTMLInputElement | null>(null)
 
     useEffect(() => {
         if (focusRef.current && focusIndex !== null) {
-            focusRef.current.focus();
+            focusRef.current.focus()
         }
-    }, [focusIndex]);
+    }, [focusIndex])
 
     const handleInputChange = (index: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
-        const newValues = [...values];
-        newValues[index] = event.target.value;
-        setValues(newValues);
-
-        if (event.target.value && index < 5) {
-            setFocusIndex(index + 1);
+        let value = event.target.value
+        if (!/^[a-zA-Z1-9]$/.test(value) && value !== '') {
+            event.preventDefault()
+            return
         }
-    };
+        if (/[a-z]/.test(value)) {
+            value = value.toUpperCase()
+        }
+
+        const newValues = [...values]
+        newValues[index] = value
+        setValues(newValues)
+
+        if (value && index < 5) {
+            setFocusIndex(index + 1)
+        }
+    }
 
     const handleKeyDown = (index: number) => (event: React.KeyboardEvent) => {
         if (event.key === 'Backspace' && values[index] === '' && index > 0) {
-            setFocusIndex(index - 1);
+            setFocusIndex(index - 1)
         }
-    };
+    }
 
     return (
         <Box display="flex" justifyContent="center" gap={1}>
@@ -68,7 +77,7 @@ const GameCodeInput: React.FC = () => {
                 />
             ))}
         </Box>
-    );
+    )
 }
 
-export default GameCodeInput;
+export default GameCodeInput

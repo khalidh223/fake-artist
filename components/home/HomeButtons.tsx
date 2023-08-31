@@ -16,19 +16,19 @@ const HomeButtons = ({ gameCode }: { gameCode: string | null }) => {
     const [dialogNewGameOpen, setNewGameDialogOpen] = useState(false)
     const [dialogJoinGameOpen, setJoinGameDialogOpen] = useState(false)
     const handleNewGameOpenDialog = () => {
-        setNewGameDialogOpen(true);
+        setNewGameDialogOpen(true)
     }
 
     const handleNewGameCloseDialog = () => {
-        setNewGameDialogOpen(false);
+        setNewGameDialogOpen(false)
     }
     
     const handleJoinGameOpenDialog = () => {
-        setJoinGameDialogOpen(true);
+        setJoinGameDialogOpen(true)
     }
     
     const handleJoinGameCloseDialog = () => {
-        setJoinGameDialogOpen(false);
+        setJoinGameDialogOpen(false)
     }
     return (
         <>
