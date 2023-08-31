@@ -2,6 +2,7 @@
 import { Button, Stack, styled } from '@mui/material'
 import React, { useState } from 'react'
 import StartNewGameDialog from './StartNewGameDialog'
+import JoinGameDialog from './JoinGameDialog'
 
 const HomeButton = styled(Button)({
     borderColor: '#F10A7E',
@@ -12,25 +13,35 @@ const HomeButton = styled(Button)({
 })
 
 const HomeButtons = ({ gameCode }: { gameCode: string | null }) => {
-    const [dialogOpen, setDialogOpen] = useState(false)
-    const handleOpenDialog = () => {
-        setDialogOpen(true);
-    };
+    const [dialogNewGameOpen, setNewGameDialogOpen] = useState(false)
+    const [dialogJoinGameOpen, setJoinGameDialogOpen] = useState(false)
+    const handleNewGameOpenDialog = () => {
+        setNewGameDialogOpen(true);
+    }
 
-    const handleCloseDialog = () => {
-        setDialogOpen(false);
-    };
+    const handleNewGameCloseDialog = () => {
+        setNewGameDialogOpen(false);
+    }
+    
+    const handleJoinGameOpenDialog = () => {
+        setJoinGameDialogOpen(true);
+    }
+    
+    const handleJoinGameCloseDialog = () => {
+        setJoinGameDialogOpen(false);
+    }
     return (
         <>
             <Stack spacing={2} mt={4} width={'100%'}>
-                <HomeButton fullWidth variant={"outlined"} onClick={handleOpenDialog}>
+                <HomeButton fullWidth variant={"outlined"} onClick={handleNewGameOpenDialog}>
                     Start new game
                 </HomeButton>
-                <HomeButton fullWidth variant={"outlined"}>
+                <HomeButton fullWidth variant={"outlined"} onClick={handleJoinGameOpenDialog}>
                     Join game
                 </HomeButton>
             </Stack>
-            <StartNewGameDialog open={dialogOpen} onClose={handleCloseDialog} gameCode={gameCode} />
+            <StartNewGameDialog open={dialogNewGameOpen} onClose={handleNewGameCloseDialog} gameCode={gameCode} />
+            <JoinGameDialog open={dialogJoinGameOpen} onClose={handleJoinGameCloseDialog} />
         </>
     )
 }
