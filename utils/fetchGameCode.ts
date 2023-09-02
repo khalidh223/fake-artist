@@ -12,13 +12,19 @@ export default async function fetchGameCode(
     console.error("API endpoint not set")
     return null
   }
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  }
+
+  const apiKey = process.env.NEXT_PUBLIC_API_KEY
+  if (apiKey) {
+    headers["x-api-key"] = apiKey
+  }
 
   try {
     const response = await fetch(endpoint, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: headers,
       body: JSON.stringify({ username: username }),
     })
     if (!response.ok) {
