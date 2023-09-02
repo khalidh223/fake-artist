@@ -17,8 +17,8 @@ const StyledTextField = styled(TextField)({
     },
     '& .MuiOutlinedInput-input': {
         color: '#ffffff',
-        width: '20px',          // Small width
-        height: '20px',         // Small height
+        width: '20px',          
+        height: '20px',         
         textAlign: 'center',
         fontSize: '20px'
     }
