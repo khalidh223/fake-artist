@@ -3,7 +3,7 @@ import HomeButtons from '../HomeButtons'
 
 describe('<HomeButtons />', () => {
   it('opens and closes the dialog', async () => {
-    const { getByRole, queryByText, getByLabelText } = render(<HomeButtons gameCode={'123ABC'} />)
+    const { getByRole, queryByText, getByLabelText } = render(<HomeButtons />)
     const openButton = getByRole('button', { name: 'Start new game' })
 
     fireEvent.click(openButton)

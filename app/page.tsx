@@ -3,7 +3,6 @@ import HomeButtons from '@/components/home/HomeButtons'
 import fetchGameCode from '@/utils/fetchGameCode';
 
 export default async function Home() {
-  const gameCode = await fetchGameCode()
   return (
     <>
       <Box
@@ -15,9 +14,9 @@ export default async function Home() {
       >
         <Box display={"flex"} flexDirection={"column"} width={"371px"}>
           <img src={'/splash.png'} alt='splash image' style={{ maxWidth: '100%', maxHeight: '80vh' }} />
-          <HomeButtons gameCode={gameCode} />
+          <HomeButtons />
         </Box>
       </Box>
     </>
-  );
+  )
 }
