@@ -27,12 +27,56 @@ const StartNewGameStepper = ({
   const [hasFetchedGameCode, setHasFetchedGameCode] = useState(false)
   const [username, setUsername] = useState("")
   const [loading, setLoading] = useState(false)
+  const [socket, setSocket] = useState<WebSocket | null>(null)
+  const [players, setPlayers] = useState<string[]>([])
 
   useEffect(() => {
     if (shouldFetchGameCode()) {
       initiateGameCodeFetch()
     }
   }, [activeStep, hasFetchedGameCode])
+
+  useEffect(() => {
+    if (gameCode && gameCode.trim() !== "" && !socket) {
+      if (process.env.NEXT_PUBLIC_AMPLIFY_WS_URL == null) {
+        throw "websocket url is not defined in environment"
+      }
+      const ws = new WebSocket(process.env.NEXT_PUBLIC_AMPLIFY_WS_URL)
+      ws.onopen = () => {
+        const gameData = {
+          action: "createGame",
+          gameCode: gameCode,
+          username: username,
+        }
+        ws.send(JSON.stringify(gameData))
+        if (!players.includes(username)) {
+          setPlayers((prevPlayers) => [...prevPlayers, username])
+        }
+      }
+      setSocket(ws)
+    }
+  }, [gameCode])
+
+  useEffect(() => {
+    if (socket) {
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data)
+        switch (data.action) {
+          case "updatePlayers":
+            setPlayers(data.players)
+            break
+          case "gameLeft":
+            // Remove the player from the players list
+            setPlayers((prevPlayers) =>
+              prevPlayers.filter((p) => p !== data.username)
+            )
+            break
+          default:
+            console.error(`Unhandled message action: ${data.action}`)
+        }
+      }
+    }
+  }, [socket])
 
   const shouldFetchGameCode = () => activeStep === 1 && !hasFetchedGameCode
 
@@ -41,11 +85,26 @@ const StartNewGameStepper = ({
   }
 
   const handleCloseDialog = () => {
+    resetStates()
     onClose()
-    resetDialogState()
   }
 
-  const resetDialogState = () => {
+  const resetStates = () => {
+    if (socket) {
+      const leaveGameData = {
+        action: "leaveGame",
+        gameCode: gameCode,
+        username: username,
+      }
+      socket.send(JSON.stringify(leaveGameData))
+      socket.close()
+      setSocket(null)
+    }
+
+    // Reset states but keep dialog open
+    setGameCode("")
+    setUsername("")
+    setPlayers([])
     setActiveStep(0)
     setHasFetchedGameCode(false)
   }
@@ -77,7 +136,7 @@ const StartNewGameStepper = ({
     if (loading) {
       return <LoadingGameCode />
     }
-    return <DisplayGameCode gameCode={gameCode} />
+    return <DisplayGameCode gameCode={gameCode} players={players} />
   }
 
   return (
@@ -89,6 +148,8 @@ const StartNewGameStepper = ({
           activeStep={activeStep}
           setActiveStep={setActiveStep}
           username={username}
+          resetStates={resetStates}
+          setHasFetchedGameCode={setHasFetchedGameCode}
         />
       </Dialog>
     </div>
@@ -159,7 +220,13 @@ const LoadingGameCode = () => (
   </Box>
 )
 
-const DisplayGameCode = ({ gameCode }: { gameCode: string | null }) => (
+const DisplayGameCode = ({
+  gameCode,
+  players,
+}: {
+  gameCode: string | null
+  players: string[]
+}) => (
   <Box
     display="flex"
     flexDirection={"column"}
@@ -172,6 +239,14 @@ const DisplayGameCode = ({ gameCode }: { gameCode: string | null }) => (
     <Typography variant="h4" fontWeight="bold" gutterBottom>
       {gameCode}
     </Typography>
+    <Typography variant="h6" mt={2} mb={1}>
+      Players:
+    </Typography>
+    <div>
+      {players.map((player) => (
+        <div key={player}>{player}</div>
+      ))}
+    </div>
   </Box>
 )
 
@@ -179,10 +254,14 @@ const StepperActions = ({
   activeStep,
   setActiveStep,
   username,
+  resetStates,
+  setHasFetchedGameCode,
 }: {
   activeStep: number
   setActiveStep: SetStateAction<any>
   username: string
+  resetStates: () => void
+  setHasFetchedGameCode: SetStateAction<any>
 }) => (
   <DialogActions sx={{ flexDirection: "column", alignItems: "center" }}>
     <MobileStepper
@@ -190,13 +269,16 @@ const StepperActions = ({
       steps={2}
       position="static"
       activeStep={activeStep}
-      backButton={
-        <BackButton activeStep={activeStep} onClick={() => setActiveStep(0)} />
-      }
+      backButton={<BackButton activeStep={activeStep} onClick={resetStates} />}
       nextButton={
         <NextButton
           activeStep={activeStep}
-          onClick={() => setActiveStep(1)}
+          onClick={() => {
+            if (activeStep === 0) {
+              setHasFetchedGameCode(false)
+            }
+            setActiveStep(activeStep + 1)
+          }}
           disabled={!username.trim()}
         />
       }
