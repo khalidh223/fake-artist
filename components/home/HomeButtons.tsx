@@ -1,8 +1,8 @@
 "use client"
 import { Button, Stack, styled } from '@mui/material'
 import React, { useState } from 'react'
-import JoinGameDialog from './JoinGameDialog'
 import StartNewGameStepper from './StartNewGameStepper'
+import JoinGameStepper from './JoinGameStepper'
 
 const HomeButton = styled(Button)({
     borderColor: '#F10A7E',
@@ -41,7 +41,7 @@ const HomeButtons = () => {
                 </HomeButton>
             </Stack>
             <StartNewGameStepper open={dialogNewGameOpen} onClose={handleNewGameCloseDialog} />
-            <JoinGameDialog open={dialogJoinGameOpen} onClose={handleJoinGameCloseDialog} />
+            <JoinGameStepper open={dialogJoinGameOpen} onClose={handleJoinGameCloseDialog} />
         </>
     )
 }
