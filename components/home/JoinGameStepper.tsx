@@ -29,10 +29,10 @@ const JoinGameStepper = ({
 
   const handleJoinGame = () => {
     if (!socket) {
-      if (process.env.NEXT_PUBLIC_AMPLIFY_WS_URL == null) {
+      if (process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT == null) {
         throw "websocket url is not defined in environment"
       }
-      const ws = new WebSocket(process.env.NEXT_PUBLIC_AMPLIFY_WS_URL);
+      const ws = new WebSocket(process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT);
       ws.onopen = () => {
         const gameData = {
           action: "joinGame",
