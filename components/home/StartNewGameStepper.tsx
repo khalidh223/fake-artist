@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, SetStateAction } from "react"
+import { useState, useEffect } from "react"
 import {
   Button,
   Typography,
@@ -14,6 +14,8 @@ import {
 } from "@mui/material"
 import CloseIcon from "@mui/icons-material/Close"
 import fetchGameCode from "@/utils/fetchGameCode"
+import { useRouter } from "next/navigation"
+import { useSocket } from "./SocketProvider"
 
 const StartNewGameStepper = ({
   open,
@@ -22,6 +24,8 @@ const StartNewGameStepper = ({
   open: boolean
   onClose: () => void
 }) => {
+  const router = useRouter()
+
   const [activeStep, setActiveStep] = useState(0)
   const [gameCode, setGameCode] = useState<string | null>(null)
   const [hasFetchedGameCode, setHasFetchedGameCode] = useState(false)
@@ -29,12 +33,33 @@ const StartNewGameStepper = ({
   const [loading, setLoading] = useState(false)
   const [socket, setSocket] = useState<WebSocket | null>(null)
   const [players, setPlayers] = useState<string[]>([])
+  const drawSocket = useSocket()
 
   useEffect(() => {
     if (shouldFetchGameCode()) {
       initiateGameCodeFetch()
     }
   }, [activeStep, hasFetchedGameCode])
+
+  useEffect(() => {
+    if (!drawSocket) return
+
+    drawSocket.on("error", (error) => {
+      console.log("Socket error:", error)
+    })
+
+    const handleGameStarted = () => {
+      console.log("Received gameStarted event")
+      router.push(`/canvas?gameCode=${gameCode}`)
+    }
+
+    drawSocket.on("gameStarted", handleGameStarted)
+
+    // Cleanup
+    return () => {
+      drawSocket.off("gameStarted", handleGameStarted)
+    }
+  }, [gameCode, drawSocket])
 
   useEffect(() => {
     if (gameCode && gameCode.trim() !== "" && !socket) {
@@ -78,6 +103,22 @@ const StartNewGameStepper = ({
     }
   }, [socket])
 
+  const startGame = () => {
+    if (!gameCode || !drawSocket) return
+    console.log("Emitting startGame with gameCode:", gameCode)
+
+    drawSocket.emit("joinGame", gameCode, (message: any) => {
+      console.log(message)
+    }) // The host joins the room
+    drawSocket.emit("startGame", gameCode)
+
+    // Delay the navigation slightly
+    // setTimeout(() => {
+    //   router.push(`/canvas?gameCode=${gameCode}`);
+    // }, 500);
+    // Manually redirect the host after emitting the event
+  }
+
   const shouldFetchGameCode = () => activeStep === 1 && !hasFetchedGameCode
 
   const initiateGameCodeFetch = () => {
@@ -107,6 +148,17 @@ const StartNewGameStepper = ({
     setPlayers([])
     setActiveStep(0)
     setHasFetchedGameCode(false)
+  }
+
+  const nextButtonOnClick = () => {
+    console.log("activeStep: ", activeStep)
+    if (activeStep === 0) {
+      setHasFetchedGameCode(false)
+    }
+    if (activeStep === 1) {
+      startGame()
+    }
+    setActiveStep(activeStep + 1)
   }
 
   const dialogStyles = {
@@ -146,10 +198,10 @@ const StartNewGameStepper = ({
         <DialogContent sx={contentStyles}>{getDialogContent()}</DialogContent>
         <StepperActions
           activeStep={activeStep}
-          setActiveStep={setActiveStep}
           username={username}
           resetStates={resetStates}
-          setHasFetchedGameCode={setHasFetchedGameCode}
+          players={players}
+          nextButtonOnClick={nextButtonOnClick}
         />
       </Dialog>
     </div>
@@ -252,16 +304,16 @@ const DisplayGameCode = ({
 
 const StepperActions = ({
   activeStep,
-  setActiveStep,
   username,
   resetStates,
-  setHasFetchedGameCode,
+  players,
+  nextButtonOnClick,
 }: {
   activeStep: number
-  setActiveStep: SetStateAction<any>
   username: string
   resetStates: () => void
-  setHasFetchedGameCode: SetStateAction<any>
+  players: string[]
+  nextButtonOnClick: () => void
 }) => (
   <DialogActions sx={{ flexDirection: "column", alignItems: "center" }}>
     <MobileStepper
@@ -273,13 +325,9 @@ const StepperActions = ({
       nextButton={
         <NextButton
           activeStep={activeStep}
-          onClick={() => {
-            if (activeStep === 0) {
-              setHasFetchedGameCode(false)
-            }
-            setActiveStep(activeStep + 1)
-          }}
-          disabled={!username.trim()}
+          onClick={nextButtonOnClick}
+          players={players}
+          username={username}
         />
       }
     />
@@ -306,23 +354,35 @@ const BackButton = ({
 const NextButton = ({
   activeStep,
   onClick,
-  disabled,
+  players,
+  username,
 }: {
   activeStep: number
   onClick: () => void
-  disabled: boolean
-}) => (
-  <Button
-    size="small"
-    onClick={onClick}
-    disabled={activeStep === 1 || disabled}
-    sx={{
-      color:
-        activeStep !== 1 && !disabled ? "#fff" : "rgba(255, 255, 255, 0.38)",
-    }}
-  >
-    Next
-  </Button>
-)
+  players: string[]
+  username: string
+}) => {
+  const canProceedFirstStep = username.trim()
+  const canProceedSecondStep = username.trim() && players.length >= 2
+  return (
+    <Button
+      size="small"
+      onClick={onClick}
+      disabled={
+        (activeStep === 0 && !canProceedFirstStep) ||
+        (activeStep === 1 && !canProceedSecondStep)
+      }
+      sx={{
+        color:
+          (activeStep === 0 && canProceedFirstStep) ||
+          (activeStep === 1 && canProceedSecondStep)
+            ? "#fff"
+            : "rgba(255, 255, 255, 0.38)",
+      }}
+    >
+      Next
+    </Button>
+  )
+}
 
 export default StartNewGameStepper
