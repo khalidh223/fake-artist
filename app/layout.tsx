@@ -5,7 +5,7 @@ import "@fontsource/roboto/700.css"
 
 import type { Metadata } from "next"
 import ThemeRegistry from "./ThemeRegistry"
-import { SocketProvider } from "@/components/home/SocketProvider"
+import { SocketProvider } from "@/app/SocketProvider"
 
 export const metadata: Metadata = {
   title: "Create Next App",

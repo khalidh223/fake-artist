@@ -51,7 +51,7 @@ const GameCodeInput: React.FC<GameCodeInputProps> = ({
   const handleInputChange =
     (index: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
       let value = event.target.value
-      if (!/^[a-zA-Z1-9]$/.test(value) && value !== "") {
+      if (!/^[a-zA-Z0-9]$/.test(value) && value !== "") {
         event.preventDefault()
         return
       }
