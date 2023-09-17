@@ -12,6 +12,8 @@ import {
 import CloseIcon from "@mui/icons-material/Close"
 import React, { useState, useEffect } from "react"
 import GameCodeInput from "./GameCodeInput"
+import { useRouter } from "next/navigation"
+import { useSocket } from "./SocketProvider"
 
 const JoinGameStepper = ({
   open,
@@ -20,19 +22,48 @@ const JoinGameStepper = ({
   open: boolean
   onClose: () => void
 }) => {
+  const router = useRouter()
+
   const [activeStep, setActiveStep] = useState(0)
   const [gameCode, setGameCode] = useState("")
   const [username, setUsername] = useState("")
   const [socket, setSocket] = useState<WebSocket | null>(null)
   const [players, setPlayers] = useState<string[]>([])
   const [gameEnded, setGameEnded] = useState(false)
+  const drawSocket = useSocket()
+
+  useEffect(() => {
+    if (!drawSocket) return
+
+    drawSocket.on("error", (error) => {
+      console.log("Socket error:", error)
+    })
+
+    drawSocket.on("gameStarted", () => {
+      router.push(`/canvas?gameCode=${gameCode}`)
+    })
+
+    // Cleanup
+    return () => {
+      drawSocket.off("gameStarted")
+    }
+  }, [gameCode, drawSocket])
+
+  const joinDrawSocketGame = () => {
+    console.log("Emitting joinGame with gameCode:", gameCode)
+    if (drawSocket) {
+      drawSocket.emit("joinGame", gameCode, (message: any) => {
+        console.log(message)
+      })
+    }
+  }
 
   const handleJoinGame = () => {
     if (!socket) {
       if (process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT == null) {
         throw "websocket url is not defined in environment"
       }
-      const ws = new WebSocket(process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT);
+      const ws = new WebSocket(process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT)
       ws.onopen = () => {
         const gameData = {
           action: "joinGame",
@@ -40,6 +71,7 @@ const JoinGameStepper = ({
           username: username,
         }
         ws.send(JSON.stringify(gameData))
+        joinDrawSocketGame()
       }
       setSocket(ws)
     } else {
@@ -49,6 +81,7 @@ const JoinGameStepper = ({
         username: username,
       }
       socket.send(JSON.stringify(gameData))
+      joinDrawSocketGame()
     }
   }
 
