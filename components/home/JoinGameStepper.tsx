@@ -1,3 +1,5 @@
+"use client"
+
 import {
   Box,
   Button,
@@ -12,14 +14,18 @@ import {
 import CloseIcon from "@mui/icons-material/Close"
 import React, { useState, useEffect } from "react"
 import GameCodeInput from "./GameCodeInput"
+import { useRouter } from "next/navigation"
+import { useSocket } from "../../app/SocketProvider"
+import { Socket } from "socket.io-client"
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context"
 
-const JoinGameStepper = ({
+const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
   open,
   onClose,
-}: {
-  open: boolean
-  onClose: () => void
 }) => {
+  const router = useRouter()
+
+  const drawSocket = useSocket()
   const [activeStep, setActiveStep] = useState(0)
   const [gameCode, setGameCode] = useState("")
   const [username, setUsername] = useState("")
@@ -27,37 +33,17 @@ const JoinGameStepper = ({
   const [players, setPlayers] = useState<string[]>([])
   const [gameEnded, setGameEnded] = useState(false)
 
-  const handleJoinGame = () => {
-    if (!socket) {
-      if (process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT == null) {
-        throw "websocket url is not defined in environment"
-      }
-      const ws = new WebSocket(process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT);
-      ws.onopen = () => {
-        const gameData = {
-          action: "joinGame",
-          gameCode: gameCode,
-          username: username,
-        }
-        ws.send(JSON.stringify(gameData))
-      }
-      setSocket(ws)
-    } else {
-      const gameData = {
-        action: "joinGame",
-        gameCode: gameCode,
-        username: username,
-      }
-      socket.send(JSON.stringify(gameData))
-    }
-  }
+  useEffect(
+    () => handleDrawSocket(drawSocket, gameCode, router),
+    [gameCode, drawSocket]
+  )
+  useEffect(
+    () => handleSocketMessages(socket, setPlayers, setGameEnded),
+    [socket]
+  )
 
-  const handleCloseDialog = () => {
-    sendLeaveGameMessage()
-    setGameCode("")
-    setUsername("")
-    setActiveStep(0)
-    onClose()
+  const handleJoinGame = () => {
+    initiateWebSocket(gameCode, username, drawSocket, setSocket, socket)
   }
 
   const sendLeaveGameMessage = () => {
@@ -73,71 +59,160 @@ const JoinGameStepper = ({
     }
   }
 
-  useEffect(() => {
-    if (socket) {
-      socket.onmessage = (event) => {
-        const data = JSON.parse(event.data)
-        if (data.action === "updatePlayers") {
-          setPlayers(data.players)
-        } else if (data.action === "gameEnded") {
-          setGameEnded(true)
-        }
-      }
-    }
-  }, [socket])
-
-  const dialogStyles = {
-    "& .MuiPaper-root": {
-      backgroundColor: "#73053C",
-      color: "#fff",
-      width: "80%",
-      maxWidth: "400px",
-    },
-    "& .MuiMobileStepper-dotActive": {
-      backgroundColor: "#F10A7E",
-    },
-  }
-
-  const contentStyles = {
-    minHeight: 300,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 3,
+  const handleCloseDialog = () => {
+    sendLeaveGameMessage()
+    setGameCode("")
+    setUsername("")
+    setActiveStep(0)
+    onClose()
   }
 
   return (
     <Dialog open={open} onClose={handleCloseDialog} sx={dialogStyles}>
       <CloseDialogButton onClose={handleCloseDialog} />
       <DialogContent sx={contentStyles}>
-        {gameEnded ? (
-          <GameEndedContent />
-        ) : activeStep === 0 ? (
-          <EnterUsernameAndGameCodeInput
-            gameCode={gameCode}
-            setGameCode={setGameCode}
-            username={username}
-            setUsername={setUsername}
-          />
-        ) : (
-          <JoiningContent players={players} />
-        )}
-      </DialogContent>
-      {!gameEnded && (
-        <StepperActions
+        <DisplayContent
+          gameEnded={gameEnded}
           activeStep={activeStep}
-          setActiveStep={setActiveStep}
-          username={username}
+          players={players}
           gameCode={gameCode}
-          handleJoinGame={handleJoinGame}
-          sendLeaveGameMessage={sendLeaveGameMessage}
+          setGameCode={setGameCode}
+          username={username}
+          setUsername={setUsername}
         />
-      )}
+      </DialogContent>
+      <StepperActions
+        activeStep={activeStep}
+        setActiveStep={setActiveStep}
+        username={username}
+        gameCode={gameCode}
+        handleJoinGame={handleJoinGame}
+        socket={socket}
+        setSocket={setSocket}
+      />
     </Dialog>
   )
 }
 
-const GameEndedContent = () => (
+const handleDrawSocket = (
+  drawSocket: Socket | null,
+  gameCode: string,
+  router: AppRouterInstance
+) => {
+  if (!drawSocket) return
+
+  drawSocket.on("error", (error) => {
+    console.error("Socket used for drawing encountered the error:", error)
+  })
+
+  drawSocket.on("gameStarted", () => {
+    router.push(`/canvas?gameCode=${gameCode}`)
+  })
+
+  return () => {
+    drawSocket.off("gameStarted")
+  }
+}
+
+const handleSocketMessages = (
+  socket: WebSocket | null,
+  setPlayers: React.Dispatch<React.SetStateAction<string[]>>,
+  setGameEnded: React.Dispatch<React.SetStateAction<boolean>>
+) => {
+  if (socket) {
+    socket.onmessage = (event: MessageEvent) => {
+      const data = JSON.parse(event.data)
+      if (data.action === "updatePlayers") {
+        setPlayers(data.players)
+      } else if (data.action === "gameEnded") {
+        setGameEnded(true)
+      }
+    }
+  }
+}
+
+const initiateWebSocket = (
+  gameCode: string,
+  username: string,
+  drawSocket: Socket | null,
+  setSocket: React.Dispatch<React.SetStateAction<WebSocket | null>>,
+  socket: WebSocket | null
+) => {
+  if (!socket) {
+    if (process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT == null) {
+      throw "When joining a game, found that websocket URL was not defined in this environment"
+    }
+    const ws = new WebSocket(process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT)
+    ws.onopen = () => {
+      const gameData = {
+        action: "joinGame",
+        gameCode: gameCode,
+        username: username,
+      }
+      ws.send(JSON.stringify(gameData))
+      if (drawSocket) {
+        drawSocket.emit("joinGame", gameCode)
+      }
+    }
+    setSocket(ws)
+  } else {
+    const gameData = {
+      action: "joinGame",
+      gameCode: gameCode,
+      username: username,
+    }
+    socket.send(JSON.stringify(gameData))
+    if (drawSocket) {
+      drawSocket.emit("joinGame", gameCode)
+    }
+  }
+}
+
+const dialogStyles = {
+  "& .MuiPaper-root": {
+    backgroundColor: "#73053C",
+    color: "#fff",
+    width: "80%",
+    maxWidth: "400px",
+  },
+  "& .MuiMobileStepper-dotActive": {
+    backgroundColor: "#F10A7E",
+  },
+}
+
+const contentStyles = {
+  minHeight: 300,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 3,
+}
+
+const CloseDialogButton: React.FC<{ onClose: () => void }> = ({ onClose }) => (
+  <IconButton
+    aria-label="close"
+    style={{ position: "absolute", top: 8, left: 8 }}
+    onClick={onClose}
+  >
+    <CloseIcon />
+  </IconButton>
+)
+
+const DisplayContent: React.FC<any> = (props) => {
+  if (props.gameEnded) return <GameEndedContent />
+  if (props.activeStep === 0)
+    return (
+      <EnterUsernameAndGameCodeInput
+        gameCode={props.gameCode}
+        setGameCode={props.setGameCode}
+        username={props.username}
+        setUsername={props.setUsername}
+      />
+    )
+  return <JoiningContent players={props.players} />
+}
+
+const GameEndedContent: React.FC = () => (
   <Box
     display="flex"
     flexDirection={"column"}
@@ -148,26 +223,11 @@ const GameEndedContent = () => (
   </Box>
 )
 
-const CloseDialogButton = ({ onClose }: { onClose: () => void }) => (
-  <IconButton
-    aria-label="close"
-    style={{ position: "absolute", top: 8, left: 8 }}
-    onClick={onClose}
-  >
-    <CloseIcon />
-  </IconButton>
-)
-
-const EnterUsernameAndGameCodeInput = ({
+const EnterUsernameAndGameCodeInput: React.FC<any> = ({
   gameCode,
   setGameCode,
   username,
   setUsername,
-}: {
-  gameCode: string
-  setGameCode: React.Dispatch<React.SetStateAction<string>>
-  username: string
-  setUsername: React.Dispatch<React.SetStateAction<string>>
 }) => {
   const inputProps = {
     style: {
@@ -206,7 +266,7 @@ const EnterUsernameAndGameCodeInput = ({
   )
 }
 
-const JoiningContent = ({ players }: { players: string[] }) => {
+const JoiningContent: React.FC<{ players: string[] }> = ({ players }) => {
   const [visibleDots, setVisibleDots] = useState(1)
 
   useEffect(() => {
@@ -239,20 +299,24 @@ const JoiningContent = ({ players }: { players: string[] }) => {
   )
 }
 
-const StepperActions = ({
-  activeStep,
-  setActiveStep,
-  username,
-  gameCode,
-  handleJoinGame,
-  sendLeaveGameMessage,
-}: {
+type StepperActionsProps = {
   activeStep: number
   setActiveStep: React.Dispatch<React.SetStateAction<number>>
   username: string
   gameCode: string
   handleJoinGame: () => void
-  sendLeaveGameMessage: () => void
+  socket: WebSocket | null
+  setSocket: React.Dispatch<React.SetStateAction<WebSocket | null>>
+}
+
+const StepperActions: React.FC<StepperActionsProps> = ({
+  activeStep,
+  setActiveStep,
+  username,
+  gameCode,
+  handleJoinGame,
+  socket,
+  setSocket,
 }) => (
   <DialogActions sx={{ flexDirection: "column", alignItems: "center" }}>
     <MobileStepper
@@ -265,7 +329,16 @@ const StepperActions = ({
           size="small"
           onClick={() => {
             setActiveStep(0)
-            sendLeaveGameMessage()
+            if (socket) {
+              const leaveGameData = {
+                action: "leaveGame",
+                gameCode: gameCode,
+                username: username,
+              }
+              socket.send(JSON.stringify(leaveGameData))
+              socket.close()
+              setSocket(null)
+            }
           }}
           sx={{
             color: activeStep !== 0 ? "#fff" : "rgba(255, 255, 255, 0.38)",
