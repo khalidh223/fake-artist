@@ -1,4 +1,4 @@
-import SketchpadComponent from "@/components/home/SketchpadComponent"
+import Sketchpad from "@/components/canvas/Sketchpad"
 import Box from "@mui/material/Box"
 
 export default function Home() {
@@ -7,9 +7,9 @@ export default function Home() {
       display="flex"
       alignItems="center"
       justifyContent="center"
-      height="100vh" // full viewport height
+      height="100vh"
     >
-      <SketchpadComponent />
+      <Sketchpad />
     </Box>
   )
 }

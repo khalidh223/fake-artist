@@ -15,7 +15,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close"
 import fetchGameCode from "@/utils/fetchGameCode"
 import { useRouter } from "next/navigation"
-import { useSocket } from "./SocketProvider"
+import { useSocket } from "../../app/SocketProvider"
 
 const StartNewGameStepper = ({
   open,
@@ -33,6 +33,7 @@ const StartNewGameStepper = ({
   const [loading, setLoading] = useState(false)
   const [socket, setSocket] = useState<WebSocket | null>(null)
   const [players, setPlayers] = useState<string[]>([])
+  
   const drawSocket = useSocket()
 
   useEffect(() => {
@@ -45,17 +46,15 @@ const StartNewGameStepper = ({
     if (!drawSocket) return
 
     drawSocket.on("error", (error) => {
-      console.log("Socket error:", error)
+      console.error("Socket used for drawing encountered the error:", error)
     })
 
     const handleGameStarted = () => {
-      console.log("Received gameStarted event")
       router.push(`/canvas?gameCode=${gameCode}`)
     }
 
     drawSocket.on("gameStarted", handleGameStarted)
 
-    // Cleanup
     return () => {
       drawSocket.off("gameStarted", handleGameStarted)
     }
@@ -64,9 +63,10 @@ const StartNewGameStepper = ({
   useEffect(() => {
     if (gameCode && gameCode.trim() !== "" && !socket) {
       if (process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT == null) {
-        throw "websocket url is not defined in environment"
+        throw "When starting a new game, found that websocket URL was not defined in this environment"
       }
       const ws = new WebSocket(process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT)
+
       ws.onopen = () => {
         const gameData = {
           action: "createGame",
@@ -78,6 +78,7 @@ const StartNewGameStepper = ({
           setPlayers((prevPlayers) => [...prevPlayers, username])
         }
       }
+
       setSocket(ws)
     }
   }, [gameCode])
@@ -91,7 +92,6 @@ const StartNewGameStepper = ({
             setPlayers(data.players)
             break
           case "gameLeft":
-            // Remove the player from the players list
             setPlayers((prevPlayers) =>
               prevPlayers.filter((p) => p !== data.username)
             )
@@ -105,18 +105,9 @@ const StartNewGameStepper = ({
 
   const startGame = () => {
     if (!gameCode || !drawSocket) return
-    console.log("Emitting startGame with gameCode:", gameCode)
 
-    drawSocket.emit("joinGame", gameCode, (message: any) => {
-      console.log(message)
-    }) // The host joins the room
+    drawSocket.emit("joinGame", gameCode)
     drawSocket.emit("startGame", gameCode)
-
-    // Delay the navigation slightly
-    // setTimeout(() => {
-    //   router.push(`/canvas?gameCode=${gameCode}`);
-    // }, 500);
-    // Manually redirect the host after emitting the event
   }
 
   const shouldFetchGameCode = () => activeStep === 1 && !hasFetchedGameCode
@@ -142,7 +133,6 @@ const StartNewGameStepper = ({
       setSocket(null)
     }
 
-    // Reset states but keep dialog open
     setGameCode("")
     setUsername("")
     setPlayers([])
@@ -151,7 +141,6 @@ const StartNewGameStepper = ({
   }
 
   const nextButtonOnClick = () => {
-    console.log("activeStep: ", activeStep)
     if (activeStep === 0) {
       setHasFetchedGameCode(false)
     }
@@ -294,11 +283,11 @@ const DisplayGameCode = ({
     <Typography variant="h6" mt={2} mb={1}>
       Players:
     </Typography>
-    <div>
+    <>
       {players.map((player) => (
         <div key={player}>{player}</div>
       ))}
-    </div>
+    </>
   </Box>
 )
 
@@ -363,7 +352,7 @@ const NextButton = ({
   username: string
 }) => {
   const canProceedFirstStep = username.trim()
-  const canProceedSecondStep = username.trim() && players.length >= 2
+  const canProceedSecondStep = username.trim() && players.length >= 5
   return (
     <Button
       size="small"
