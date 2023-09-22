@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation"
 import { useSocket } from "../../app/SocketProvider"
 import { Socket } from "socket.io-client"
 
-const DrawingCanvas: React.FC = () => {
+const DrawCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const lastCoords = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const [color, setColor] = useState<string>("#00FF00")
@@ -154,4 +154,4 @@ const draw = (
   context.closePath()
 }
 
-export default DrawingCanvas
+export default DrawCanvas
