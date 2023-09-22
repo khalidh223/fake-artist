@@ -7,7 +7,7 @@ const Players = () => {
   const [players, setPlayers] = useState<string[] | null>(null)
   const gameCode = useGameCode()
 
-  setupWebSocket(gameCode, setPlayers)
+  useSetupWebSocket(gameCode, setPlayers)
 
   return (
     <StyledPlayersBox>
@@ -22,7 +22,10 @@ const useGameCode = () => {
   return params.get("gameCode") || ""
 }
 
-const setupWebSocket = (gameCode: string, setPlayers: any) => {
+const useSetupWebSocket = (
+  gameCode: string,
+  setPlayers: React.Dispatch<React.SetStateAction<string[] | null>>
+) => {
   const websocketURL = process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT
   if (!websocketURL) {
     throw "Websocket URL was not defined in this environment"
@@ -93,10 +96,10 @@ const LoadingPlayer = () => (
     width="100%"
     justifyContent="space-between"
   >
-    <SkeletonComponent width={32} height={51} sx={{marginRight: "0.5rem"}} />
+    <SkeletonComponent width={32} height={51} sx={{ marginRight: "0.5rem" }} />
     <TypographySkeleton width={"3em"} marginRight={"1em"} />
-    <SkeletonComponent width={25} height={25} sx={{marginRight: "0.2rem"}} />
-    <SkeletonComponent width={25} height={25} sx={{marginLeft: "0.5rem"}} />
+    <SkeletonComponent width={25} height={25} sx={{ marginRight: "0.2rem" }} />
+    <SkeletonComponent width={25} height={25} sx={{ marginLeft: "0.5rem" }} />
   </Box>
 )
 
