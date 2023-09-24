@@ -1,42 +1,39 @@
 "use client"
 import React, { useEffect, useState } from "react"
 import { Box, Skeleton, Typography } from "@mui/material"
-import { useSearchParams } from "next/navigation"
 
-const Players = () => {
+const Players = ({
+  socket,
+  gameCode,
+  questionMaster,
+}: {
+  socket: WebSocket | null
+  gameCode: string
+  questionMaster: string | null
+}) => {
   const [players, setPlayers] = useState<string[] | null>(null)
-  const gameCode = useGameCode()
 
-  useSetupWebSocket(gameCode, setPlayers)
+  useSetupWebSocket(gameCode, setPlayers, socket)
 
   return (
     <StyledPlayersBox>
       <PlayerHeader />
-      {players == null ? <LoadingPlayers /> : <PlayerList players={players} />}
+      {players == null ? <LoadingPlayers /> : <PlayerList players={players} questionMaster={questionMaster}/>}
     </StyledPlayersBox>
   )
 }
 
-const useGameCode = () => {
-  const params = useSearchParams()
-  return params.get("gameCode") || ""
-}
-
 const useSetupWebSocket = (
   gameCode: string,
-  setPlayers: React.Dispatch<React.SetStateAction<string[] | null>>
+  setPlayers: React.Dispatch<React.SetStateAction<string[] | null>>,
+  socket: WebSocket | null
 ) => {
-  const websocketURL = process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT
-  if (!websocketURL) {
-    throw "Websocket URL was not defined in this environment"
-  }
-
-  const socket = new WebSocket(websocketURL)
-
   useEffect(() => {
-    socket.onopen = () => requestPlayersFromServer(socket, gameCode)
-    socket.onmessage = (event) => updatePlayersFromServer(event, setPlayers)
-  }, [])
+    if (socket) {
+      requestPlayersFromServer(socket, gameCode)
+      socket.onmessage = (event) => updatePlayersFromServer(event, setPlayers)
+    }
+  }, [socket, gameCode, setPlayers])
 }
 
 const requestPlayersFromServer = (socket: WebSocket, gameCode: string) => {
@@ -49,7 +46,7 @@ const requestPlayersFromServer = (socket: WebSocket, gameCode: string) => {
 
 const updatePlayersFromServer = (event: any, setPlayers: any) => {
   const data = JSON.parse(event.data)
-  if (data.action === "getPlayers") {
+  if (data.action === "listOfPlayers") {
     setPlayers(data.players)
   }
 }
@@ -113,15 +110,21 @@ const TypographySkeleton = (props: any) => (
   </Typography>
 )
 
-const PlayerList = ({ players }: { players: string[] }) => (
+const PlayerList = ({ players, questionMaster }: { players: string[], questionMaster: string | null }) => (
   <>
     {players.map((player, idx) => (
-      <PlayerItem key={idx} player={player} />
+      <PlayerItem key={idx} player={player} questionMaster={questionMaster} />
     ))}
   </>
 )
 
-const PlayerItem = ({ player }: { player: string }) => (
+const PlayerItem = ({
+  player,
+  questionMaster,
+}: {
+  player: string
+  questionMaster: string | null
+}) => (
   <Box
     display="flex"
     alignItems="center"
@@ -130,7 +133,7 @@ const PlayerItem = ({ player }: { player: string }) => (
     justifyContent="space-between"
   >
     <Box display="flex" alignItems="center">
-      <PlayerImage />
+      <PlayerImage questionMaster={questionMaster} name={player} />
       <PlayerName name={player} />
     </Box>
     <Coins />
@@ -161,18 +164,41 @@ const CoinSection = ({
   </Box>
 )
 
-const PlayerImage = () => (
-  <img
-    src={"/player.png"}
-    alt="player"
-    style={{
-      width: 32,
-      height: 51,
-      backgroundColor: "transparent",
-      marginRight: "0.5rem",
-    }}
-  />
-)
+const PlayerImage = ({
+  questionMaster,
+  name
+}: {
+  questionMaster: string | null,
+  name: string
+}) => {
+  if (questionMaster == name) {
+    return (
+      <img
+        src={"/question_master_icon.png"}
+        alt="player"
+        style={{
+          width: 32,
+          height: 51,
+          backgroundColor: "transparent",
+          marginRight: "0.5rem",
+        }}
+      />
+    )
+  }
+
+  return (
+    <img
+      src={"/player.png"}
+      alt="player"
+      style={{
+        width: 32,
+        height: 51,
+        backgroundColor: "transparent",
+        marginRight: "0.5rem",
+      }}
+    />
+  )
+}
 
 const PlayerName = ({ name }: { name: string }) => (
   <Typography variant="body1" sx={{ fontSize: 18, fontWeight: "bold" }}>
