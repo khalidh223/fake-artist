@@ -15,7 +15,8 @@ import {
 import CloseIcon from "@mui/icons-material/Close"
 import fetchGameCode from "@/utils/fetchGameCode"
 import { useRouter } from "next/navigation"
-import { useSocket } from "../../app/SocketProvider"
+import { useDrawSocket } from "../../app/DrawSocketProvider"
+import { useUser } from "@/app/UserProvider"
 
 const StartNewGameStepper = ({
   open,
@@ -29,12 +30,17 @@ const StartNewGameStepper = ({
   const [activeStep, setActiveStep] = useState(0)
   const [gameCode, setGameCode] = useState<string | null>(null)
   const [hasFetchedGameCode, setHasFetchedGameCode] = useState(false)
-  const [username, setUsername] = useState("")
+  const {
+    username,
+    setUsername,
+    playerSocket,
+    setPlayerSocket,
+    setConnectionId,
+  } = useUser()
   const [loading, setLoading] = useState(false)
-  const [socket, setSocket] = useState<WebSocket | null>(null)
   const [players, setPlayers] = useState<string[]>([])
-  
-  const drawSocket = useSocket()
+
+  const drawSocket = useDrawSocket()
 
   useEffect(() => {
     if (shouldFetchGameCode()) {
@@ -61,7 +67,7 @@ const StartNewGameStepper = ({
   }, [gameCode, drawSocket])
 
   useEffect(() => {
-    if (gameCode && gameCode.trim() !== "" && !socket) {
+    if (gameCode && gameCode.trim() !== "" && !playerSocket) {
       if (process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT == null) {
         throw "When starting a new game, found that websocket URL was not defined in this environment"
       }
@@ -79,29 +85,40 @@ const StartNewGameStepper = ({
         }
       }
 
-      setSocket(ws)
+      setPlayerSocket(ws)
     }
   }, [gameCode])
 
   useEffect(() => {
-    if (socket) {
-      socket.onmessage = (event) => {
-        const data = JSON.parse(event.data)
-        switch (data.action) {
-          case "updatePlayers":
-            setPlayers(data.players)
-            break
-          case "gameLeft":
-            setPlayers((prevPlayers) =>
-              prevPlayers.filter((p) => p !== data.username)
-            )
-            break
-          default:
-            console.error(`Unhandled message action: ${data.action}`)
-        }
+    const handleOnMessage = (event: MessageEvent) => {
+      const data = JSON.parse(event.data)
+      switch (data.action) {
+        case "updatePlayers":
+          setPlayers(data.players)
+          break
+        case "gameLeft":
+          setPlayers((prevPlayers) =>
+            prevPlayers.filter((p) => p !== data.username)
+          )
+          break
+        case "connectionEstablished":
+          setConnectionId(data.connectionId)
+          break
+        default:
+          console.error(`Unhandled message action: ${data.action}`)
       }
     }
-  }, [socket])
+
+    if (playerSocket) {
+      playerSocket.onmessage = handleOnMessage
+    }
+
+    return () => {
+      if (playerSocket) {
+        playerSocket.onmessage = null
+      }
+    }
+  }, [playerSocket])
 
   const startGame = () => {
     if (!gameCode || !drawSocket) return
@@ -122,15 +139,15 @@ const StartNewGameStepper = ({
   }
 
   const resetStates = () => {
-    if (socket) {
+    if (playerSocket) {
       const leaveGameData = {
         action: "leaveGame",
         gameCode: gameCode,
         username: username,
       }
-      socket.send(JSON.stringify(leaveGameData))
-      socket.close()
-      setSocket(null)
+      playerSocket.send(JSON.stringify(leaveGameData))
+      playerSocket.close()
+      setPlayerSocket(null)
     }
 
     setGameCode("")

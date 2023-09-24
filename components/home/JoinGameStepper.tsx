@@ -15,9 +15,10 @@ import CloseIcon from "@mui/icons-material/Close"
 import React, { useState, useEffect } from "react"
 import GameCodeInput from "./GameCodeInput"
 import { useRouter } from "next/navigation"
-import { useSocket } from "../../app/SocketProvider"
+import { useDrawSocket } from "../../app/DrawSocketProvider"
 import { Socket } from "socket.io-client"
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context"
+import { useUser } from "@/app/UserProvider"
 
 const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
   open,
@@ -25,11 +26,17 @@ const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
 }) => {
   const router = useRouter()
 
-  const drawSocket = useSocket()
+  const drawSocket = useDrawSocket()
+
   const [activeStep, setActiveStep] = useState(0)
   const [gameCode, setGameCode] = useState("")
-  const [username, setUsername] = useState("")
-  const [socket, setSocket] = useState<WebSocket | null>(null)
+  const {
+    username,
+    setUsername,
+    playerSocket,
+    setPlayerSocket,
+    setConnectionId,
+  } = useUser()
   const [players, setPlayers] = useState<string[]>([])
   const [gameEnded, setGameEnded] = useState(false)
 
@@ -37,25 +44,35 @@ const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
     () => handleDrawSocket(drawSocket, gameCode, router),
     [gameCode, drawSocket]
   )
-  useEffect(
-    () => handleSocketMessages(socket, setPlayers, setGameEnded),
-    [socket]
-  )
+  useEffect(() => {
+    return handlePlayerSocketMessages(
+      playerSocket,
+      setPlayers,
+      setGameEnded,
+      setConnectionId
+    )
+  }, [playerSocket])
 
   const handleJoinGame = () => {
-    initiateWebSocket(gameCode, username, drawSocket, setSocket, socket)
+    initiateWebSocket(
+      gameCode,
+      username,
+      drawSocket,
+      setPlayerSocket,
+      playerSocket
+    )
   }
 
   const sendLeaveGameMessage = () => {
-    if (socket) {
+    if (playerSocket) {
       const leaveGameData = {
         action: "leaveGame",
         gameCode: gameCode,
         username: username,
       }
-      socket.send(JSON.stringify(leaveGameData))
-      socket.close()
-      setSocket(null)
+      playerSocket.send(JSON.stringify(leaveGameData))
+      playerSocket.close()
+      setPlayerSocket(null)
     }
   }
 
@@ -87,8 +104,8 @@ const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
         username={username}
         gameCode={gameCode}
         handleJoinGame={handleJoinGame}
-        socket={socket}
-        setSocket={setSocket}
+        playerSocket={playerSocket}
+        setPlayerSocket={setPlayerSocket}
       />
     </Dialog>
   )
@@ -114,19 +131,36 @@ const handleDrawSocket = (
   }
 }
 
-const handleSocketMessages = (
-  socket: WebSocket | null,
+const handlePlayerSocketMessages = (
+  playerSocket: WebSocket | null,
   setPlayers: React.Dispatch<React.SetStateAction<string[]>>,
-  setGameEnded: React.Dispatch<React.SetStateAction<boolean>>
+  setGameEnded: React.Dispatch<React.SetStateAction<boolean>>,
+  setConnectionId: React.Dispatch<React.SetStateAction<string>>
 ) => {
-  if (socket) {
-    socket.onmessage = (event: MessageEvent) => {
-      const data = JSON.parse(event.data)
-      if (data.action === "updatePlayers") {
+  const messageEventListener = (event: MessageEvent) => {
+    const data = JSON.parse(event.data)
+    switch (data.action) {
+      case "updatePlayers":
         setPlayers(data.players)
-      } else if (data.action === "gameEnded") {
+        break
+      case "gameEnded":
         setGameEnded(true)
-      }
+        break
+      case "connectionEstablished":
+        setConnectionId(data.connectionId)
+        break
+      default:
+        console.error(`Unhandled message action: ${data.action}`)
+    }
+  }
+
+  if (playerSocket) {
+    playerSocket.addEventListener("message", messageEventListener)
+  }
+
+  return () => {
+    if (playerSocket) {
+      playerSocket.removeEventListener("message", messageEventListener)
     }
   }
 }
@@ -135,10 +169,10 @@ const initiateWebSocket = (
   gameCode: string,
   username: string,
   drawSocket: Socket | null,
-  setSocket: React.Dispatch<React.SetStateAction<WebSocket | null>>,
-  socket: WebSocket | null
+  setPlayerSocket: React.Dispatch<React.SetStateAction<WebSocket | null>>,
+  playerSocket: WebSocket | null
 ) => {
-  if (!socket) {
+  if (!playerSocket) {
     if (process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT == null) {
       throw "When joining a game, found that websocket URL was not defined in this environment"
     }
@@ -154,14 +188,14 @@ const initiateWebSocket = (
         drawSocket.emit("joinGame", gameCode)
       }
     }
-    setSocket(ws)
+    setPlayerSocket(ws)
   } else {
     const gameData = {
       action: "joinGame",
       gameCode: gameCode,
       username: username,
     }
-    socket.send(JSON.stringify(gameData))
+    playerSocket.send(JSON.stringify(gameData))
     if (drawSocket) {
       drawSocket.emit("joinGame", gameCode)
     }
@@ -305,8 +339,8 @@ type StepperActionsProps = {
   username: string
   gameCode: string
   handleJoinGame: () => void
-  socket: WebSocket | null
-  setSocket: React.Dispatch<React.SetStateAction<WebSocket | null>>
+  playerSocket: WebSocket | null
+  setPlayerSocket: React.Dispatch<React.SetStateAction<WebSocket | null>>
 }
 
 const StepperActions: React.FC<StepperActionsProps> = ({
@@ -315,8 +349,8 @@ const StepperActions: React.FC<StepperActionsProps> = ({
   username,
   gameCode,
   handleJoinGame,
-  socket,
-  setSocket,
+  playerSocket,
+  setPlayerSocket,
 }) => (
   <DialogActions sx={{ flexDirection: "column", alignItems: "center" }}>
     <MobileStepper
@@ -329,15 +363,15 @@ const StepperActions: React.FC<StepperActionsProps> = ({
           size="small"
           onClick={() => {
             setActiveStep(0)
-            if (socket) {
+            if (playerSocket) {
               const leaveGameData = {
                 action: "leaveGame",
                 gameCode: gameCode,
                 username: username,
               }
-              socket.send(JSON.stringify(leaveGameData))
-              socket.close()
-              setSocket(null)
+              playerSocket.send(JSON.stringify(leaveGameData))
+              playerSocket.close()
+              setPlayerSocket(null)
             }
           }}
           sx={{
