@@ -5,7 +5,8 @@ import "@fontsource/roboto/700.css"
 
 import type { Metadata } from "next"
 import ThemeRegistry from "./ThemeRegistry"
-import { SocketProvider } from "@/app/SocketProvider"
+import { DrawSocketProvider } from "@/app/DrawSocketProvider"
+import { UserProvider } from "./UserProvider"
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -20,9 +21,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <SocketProvider>
-          <ThemeRegistry options={{ key: "mui" }}>{children}</ThemeRegistry>
-        </SocketProvider>
+        <DrawSocketProvider>
+          <UserProvider>
+            <ThemeRegistry options={{ key: "mui" }}>{children}</ThemeRegistry>
+          </UserProvider>
+        </DrawSocketProvider>
       </body>
     </html>
   )

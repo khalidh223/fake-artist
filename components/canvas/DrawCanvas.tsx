@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useRef, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { useSocket } from "../../app/SocketProvider"
+import { useDrawSocket } from "../../app/DrawSocketProvider"
 import { Socket } from "socket.io-client"
 
 const DrawCanvas: React.FC = () => {
@@ -10,7 +10,8 @@ const DrawCanvas: React.FC = () => {
   const [color, setColor] = useState<string>("#00FF00")
   const drawingRef = useRef<boolean>(false)
   const gameCode = useGameCode()
-  const drawCanvasSocket = useSocket()
+
+  const drawCanvasSocket = useDrawSocket()
 
   useEffect(
     () => setupSocketListeners(drawCanvasSocket, canvasRef),

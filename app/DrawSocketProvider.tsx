@@ -9,13 +9,13 @@ import React, {
 } from "react"
 import { io, Socket } from "socket.io-client"
 
-const SocketContext = createContext<Socket | null>(null)
+const DrawSocketContext = createContext<Socket | null>(null)
 
-type SocketProviderProps = {
+type DrawSocketProviderProps = {
   children: ReactNode
 }
 
-export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
+export const DrawSocketProvider: React.FC<DrawSocketProviderProps> = ({ children }) => {
   if (process.env.NEXT_PUBLIC_GAME_WEBSOCKET_ENDPOINT == null) {
     throw "game websocket url is not defined in environment"
   }
@@ -35,10 +35,10 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   }, [])
 
   return (
-    <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
+    <DrawSocketContext.Provider value={socket}>{children}</DrawSocketContext.Provider>
   )
 }
 
-export const useSocket = () => {
-  return useContext(SocketContext)
+export const useDrawSocket = () => {
+  return useContext(DrawSocketContext)
 }
