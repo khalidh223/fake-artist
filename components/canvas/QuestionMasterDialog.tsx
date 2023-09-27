@@ -28,8 +28,8 @@ const QuestionMasterDialog = () => {
           <img
             src={"/question_master.png"}
             alt="Image"
-            width={94}
-            height={136}
+            width={120}
+            height={173}
           />
         </Box>
         <Box display="flex" justifyContent="space-between" mb={4}>
