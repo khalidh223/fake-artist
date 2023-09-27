@@ -8,7 +8,9 @@ interface UserContextValue {
   playerSocket: WebSocket | null
   setPlayerSocket: React.Dispatch<React.SetStateAction<WebSocket | null>>
   connectionId: string
-  setConnectionId: React.Dispatch<React.SetStateAction<string>>
+  setConnectionId: React.Dispatch<React.SetStateAction<string>>,
+  hexCodeOfColorChosen: string | null,
+  setHexCodeOfColorChosen: React.Dispatch<React.SetStateAction<string | null>>
 }
 
 const UserContext = createContext<UserContextValue | undefined>(undefined)
@@ -21,6 +23,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [username, setUsername] = useState<string>("")
   const [playerSocket, setPlayerSocket] = useState<WebSocket | null>(null)
   const [connectionId, setConnectionId] = useState<string>("")
+  const [hexCodeOfColorChosen, setHexCodeOfColorChosen] = useState<string | null>(null)
 
   return (
     <UserContext.Provider
@@ -31,6 +34,8 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         setPlayerSocket,
         connectionId,
         setConnectionId,
+        hexCodeOfColorChosen,
+        setHexCodeOfColorChosen
       }}
     >
       {children}
