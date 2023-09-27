@@ -19,7 +19,7 @@ const FakeArtistDialog = () => {
           <img src="/fake_artist.png" alt="Image" width={120} height={173} />
           <Box mt={2} mb={2}>
             <Typography variant="body1" fontWeight={"bold"} gutterBottom>
-              Fake it 'till you make it.
+              Fake it till you make it.
             </Typography>
           </Box>
           <Box maxWidth={"20em"}>
