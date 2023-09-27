@@ -1,0 +1,9 @@
+.imageHoverEffect {
+    transition: transform 0.3s ease-in-out;
+    transform: rotate(20deg);
+  }
+  
+  .imageHoverEffect:hover {
+    transform: rotate(20deg) translateY(-10px);
+  }
+  

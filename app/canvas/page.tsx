@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 import { useUser } from "../UserProvider"
 import { useSearchParams } from "next/navigation"
 import QuestionMasterDialog from "@/components/canvas/QuestionMasterDialog"
+import FakeArtistDialog from "@/components/canvas/FakeArtistDialog"
 
 const useGameCode = () => {
   const params = useSearchParams()
@@ -163,6 +164,7 @@ export default function Home() {
       height="100vh"
     >
       {role === "QUESTION_MASTER" ? <QuestionMasterDialog /> : null}
+      {role === "FAKE_ARTIST" ? <FakeArtistDialog /> : null}
       <Players
         socket={playerSocket}
         gameCode={gameCode}
