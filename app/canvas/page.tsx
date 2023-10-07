@@ -7,6 +7,7 @@ import { useUser } from "../UserProvider"
 import { useSearchParams } from "next/navigation"
 import QuestionMasterDialog from "@/components/canvas/QuestionMasterDialog"
 import FakeArtistDialog from "@/components/canvas/FakeArtistDialog"
+import PlayerDialog from "@/components/canvas/PlayerDialog"
 
 const useGameCode = () => {
   const params = useSearchParams()
@@ -59,7 +60,7 @@ const useSendRoleToPlayer = (
   }, [canvasSocket, gameCode, connectionId])
 }
 
-const useAddEventListenerToCanvasSocket = (
+const useAddEventListenerToCanvasWebSocket = (
   canvasSocket: WebSocket | null,
   setQuestionMaster: React.Dispatch<React.SetStateAction<string | null>>
 ) => {
@@ -83,12 +84,18 @@ const useAddEventListenerToCanvasSocket = (
   }, [canvasSocket])
 }
 
+export type PenChosenData = {
+  color: string,
+  username: string
+}
+
 const useAddEventListenerToPlayerSocket = (
   playerSocket: WebSocket | null,
   setRole: React.Dispatch<
     React.SetStateAction<"FAKE_ARTIST" | "PLAYER" | "QUESTION_MASTER" | null>
   >,
-  setAllPlayersHaveARole: React.Dispatch<React.SetStateAction<boolean>>
+  setAllPlayersHaveARole: React.Dispatch<React.SetStateAction<boolean>>,
+  setPenChosen: React.Dispatch<React.SetStateAction<PenChosenData | null>>
 ) => {
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -99,6 +106,14 @@ const useAddEventListenerToPlayerSocket = (
 
       if (data.action === "allPlayersHaveARole") {
         setAllPlayersHaveARole(true)
+      }
+
+      if (data.action === "setColorChosen") {
+        let penChosenData: PenChosenData = {
+          color: data.colorChosen,
+          username: data.username
+        }
+        setPenChosen(penChosenData)
       }
     }
 
@@ -136,25 +151,29 @@ export default function Home() {
   }
 
   const gameCode = useGameCode()
-  const canvasSocket = useWebSocket(websocketURL)
+  const canvasWebSocket = useWebSocket(websocketURL)
   const { playerSocket, connectionId } = useUser()
+
   const [role, setRole] = useState<
     "FAKE_ARTIST" | "PLAYER" | "QUESTION_MASTER" | null
   >(null)
   const [questionMaster, setQuestionMaster] = useState<string | null>(null)
   const [allPlayersHaveARole, setAllPlayersHaveARole] = useState<boolean>(false)
 
-  useSendRoleToPlayer(canvasSocket, gameCode, connectionId)
+  const [penChosen, setPenChosen] = useState<PenChosenData | null>(null)
 
-  useAddEventListenerToCanvasSocket(canvasSocket, setQuestionMaster)
+  useSendRoleToPlayer(canvasWebSocket, gameCode, connectionId)
+
+  useAddEventListenerToCanvasWebSocket(canvasWebSocket, setQuestionMaster)
 
   useAddEventListenerToPlayerSocket(
     playerSocket,
     setRole,
-    setAllPlayersHaveARole
+    setAllPlayersHaveARole,
+    setPenChosen
   )
 
-  useSendQuestionMaster(allPlayersHaveARole, gameCode, canvasSocket)
+  useSendQuestionMaster(allPlayersHaveARole, gameCode, canvasWebSocket)
 
   return (
     <Box
@@ -164,7 +183,18 @@ export default function Home() {
       height="100vh"
     >
       {role === "QUESTION_MASTER" ? <QuestionMasterDialog /> : null}
-      {role === "FAKE_ARTIST" ? <FakeArtistDialog /> : null}
+      {role === "FAKE_ARTIST" ? (
+        <FakeArtistDialog
+          penChosen={penChosen}
+          canvasWebSocket={canvasWebSocket}
+        />
+      ) : null}
+      {role === "PLAYER" ? (
+        <PlayerDialog
+          penChosen={penChosen}
+          canvasWebSocket={canvasWebSocket}
+        />
+      ) : null}
       <Players
         socket={playerSocket}
         gameCode={gameCode}
