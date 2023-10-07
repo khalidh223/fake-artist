@@ -1,12 +1,10 @@
-"use client"
-
+import { Box, Button, Dialog, DialogContent, Typography } from "@mui/material"
 import React from "react"
-import { Dialog, DialogContent, Typography, Button, Box } from "@mui/material"
 import PenPicker from "./PenPicker"
 import { PenChosenData } from "@/app/canvas/page"
 import { useUser } from "@/app/UserProvider"
 
-const FakeArtistDialog = ({
+const PlayerDialog = ({
   penChosen,
   canvasWebSocket,
 }: {
@@ -23,21 +21,21 @@ const FakeArtistDialog = ({
           alignItems="center"
           textAlign="center"
         >
-          <Box mt={2}>
-            <Typography variant="h5" fontWeight="bold" gutterBottom>
-              You are the Fake Artist!
-            </Typography>
-          </Box>
-          <img src="/fake_artist.png" alt="Image" width={120} height={173} />
+          <Typography variant="h5" fontWeight="bold" gutterBottom>
+            You are a Player!
+          </Typography>
+          <img src="/player_large.png" alt="Image" width={120} height={173} />
           <Box mt={2} mb={2}>
             <Typography variant="body1" fontWeight={"bold"} gutterBottom>
-              Fake it till you make it.
+              Find the Fake Artist!
             </Typography>
           </Box>
           <Box maxWidth={"20em"}>
             <Typography variant="body2" gutterBottom>
-              You will see the theme, but not the title - earn points by not
-              getting caught, or by guessing the title correctly if caught!
+              The <strong>Question Master</strong> shares the title with all but
+              one player — the <strong>Fake Artist.</strong> You get two rounds
+              to make a single mark, <i>without</i> releasing your click. Earn
+              points by identifying the Fake Artist!
             </Typography>
           </Box>
           <Box mt={2}>
@@ -62,4 +60,4 @@ const FakeArtistDialog = ({
   )
 }
 
-export default FakeArtistDialog
+export default PlayerDialog
