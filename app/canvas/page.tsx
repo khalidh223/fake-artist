@@ -95,7 +95,8 @@ const useAddEventListenerToPlayerSocket = (
     React.SetStateAction<"FAKE_ARTIST" | "PLAYER" | "QUESTION_MASTER" | null>
   >,
   setAllPlayersHaveARole: React.Dispatch<React.SetStateAction<boolean>>,
-  setPenChosen: React.Dispatch<React.SetStateAction<PenChosenData | null>>
+  setPenChosen: React.Dispatch<React.SetStateAction<PenChosenData | null>>,
+  setAllPlayersConfirmedColor: React.Dispatch<React.SetStateAction<boolean>>
 ) => {
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -114,6 +115,10 @@ const useAddEventListenerToPlayerSocket = (
           username: data.username
         }
         setPenChosen(penChosenData)
+      }
+
+      if (data.action === "allPlayersConfirmedColor") {
+        setAllPlayersConfirmedColor(data.allPlayersConfirmedColor)
       }
     }
 
@@ -159,8 +164,9 @@ export default function Home() {
   >(null)
   const [questionMaster, setQuestionMaster] = useState<string | null>(null)
   const [allPlayersHaveARole, setAllPlayersHaveARole] = useState<boolean>(false)
-
   const [penChosen, setPenChosen] = useState<PenChosenData | null>(null)
+  const [allPlayersConfirmedColor, setAllPlayersConfirmedColor] = useState<boolean>(false)
+
 
   useSendRoleToPlayer(canvasWebSocket, gameCode, connectionId)
 
@@ -170,7 +176,8 @@ export default function Home() {
     playerSocket,
     setRole,
     setAllPlayersHaveARole,
-    setPenChosen
+    setPenChosen,
+    setAllPlayersConfirmedColor
   )
 
   useSendQuestionMaster(allPlayersHaveARole, gameCode, canvasWebSocket)
@@ -187,12 +194,16 @@ export default function Home() {
         <FakeArtistDialog
           penChosen={penChosen}
           canvasWebSocket={canvasWebSocket}
+          gameCode={gameCode}
+          allPlayersConfirmedColor={allPlayersConfirmedColor}
         />
       ) : null}
       {role === "PLAYER" ? (
         <PlayerDialog
           penChosen={penChosen}
           canvasWebSocket={canvasWebSocket}
+          gameCode={gameCode}
+          allPlayersConfirmedColor={allPlayersConfirmedColor}
         />
       ) : null}
       <Players
