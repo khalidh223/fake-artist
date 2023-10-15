@@ -39,7 +39,6 @@ const sendWebSocketMessage = (socket: WebSocket | null, data: object) => {
     send()
   } else {
     socket.addEventListener("open", send)
-    // Cleanup listener
     return () => {
       socket.removeEventListener("open", send)
     }
@@ -85,7 +84,7 @@ const useAddEventListenerToCanvasWebSocket = (
 }
 
 export type PenChosenData = {
-  color: string,
+  color: string
   username: string
 }
 
@@ -96,7 +95,9 @@ const useAddEventListenerToPlayerSocket = (
   >,
   setAllPlayersHaveARole: React.Dispatch<React.SetStateAction<boolean>>,
   setPenChosen: React.Dispatch<React.SetStateAction<PenChosenData | null>>,
-  setAllPlayersConfirmedColor: React.Dispatch<React.SetStateAction<boolean>>
+  setAllPlayersConfirmedColor: React.Dispatch<React.SetStateAction<boolean>>,
+  setThemeChosenByQuestionMaster: React.Dispatch<React.SetStateAction<string>>,
+  setTitleChosenByQuestionMaster: React.Dispatch<React.SetStateAction<string>>
 ) => {
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -105,20 +106,28 @@ const useAddEventListenerToPlayerSocket = (
         setRole(data.role)
       }
 
-      if (data.action === "allPlayersHaveARole") {
+      else if (data.action === "allPlayersHaveARole") {
         setAllPlayersHaveARole(true)
       }
 
-      if (data.action === "setColorChosen") {
+      else if (data.action === "setColorChosen") {
         let penChosenData: PenChosenData = {
           color: data.colorChosen,
-          username: data.username
+          username: data.username,
         }
         setPenChosen(penChosenData)
       }
 
-      if (data.action === "allPlayersConfirmedColor") {
+      else if (data.action === "allPlayersConfirmedColor") {
         setAllPlayersConfirmedColor(data.allPlayersConfirmedColor)
+      }
+
+      else if (data.action === "setThemeChosenByQuestionMaster") {
+        setThemeChosenByQuestionMaster(data.theme)
+      }
+
+      else if (data.action === "setTitleChosenByQuestionMaster") {
+        setTitleChosenByQuestionMaster(data.title)
       }
     }
 
@@ -157,7 +166,12 @@ export default function Home() {
 
   const gameCode = useGameCode()
   const canvasWebSocket = useWebSocket(websocketURL)
-  const { playerSocket, connectionId } = useUser()
+  const {
+    playerSocket,
+    connectionId,
+    setThemeChosenByQuestionMaster,
+    setTitleChosenByQuestionMaster,
+  } = useUser()
 
   const [role, setRole] = useState<
     "FAKE_ARTIST" | "PLAYER" | "QUESTION_MASTER" | null
@@ -165,8 +179,8 @@ export default function Home() {
   const [questionMaster, setQuestionMaster] = useState<string | null>(null)
   const [allPlayersHaveARole, setAllPlayersHaveARole] = useState<boolean>(false)
   const [penChosen, setPenChosen] = useState<PenChosenData | null>(null)
-  const [allPlayersConfirmedColor, setAllPlayersConfirmedColor] = useState<boolean>(false)
-
+  const [allPlayersConfirmedColor, setAllPlayersConfirmedColor] =
+    useState<boolean>(false)
 
   useSendRoleToPlayer(canvasWebSocket, gameCode, connectionId)
 
@@ -177,7 +191,9 @@ export default function Home() {
     setRole,
     setAllPlayersHaveARole,
     setPenChosen,
-    setAllPlayersConfirmedColor
+    setAllPlayersConfirmedColor,
+    setThemeChosenByQuestionMaster,
+    setTitleChosenByQuestionMaster
   )
 
   useSendQuestionMaster(allPlayersHaveARole, gameCode, canvasWebSocket)
@@ -189,7 +205,12 @@ export default function Home() {
       justifyContent="center"
       height="100vh"
     >
-      {role === "QUESTION_MASTER" ? <QuestionMasterDialog /> : null}
+      {role === "QUESTION_MASTER" ? (
+        <QuestionMasterDialog
+          gameCode={gameCode}
+          allPlayersConfirmedColor={allPlayersConfirmedColor}
+        />
+      ) : null}
       {role === "FAKE_ARTIST" ? (
         <FakeArtistDialog
           penChosen={penChosen}

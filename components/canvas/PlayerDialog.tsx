@@ -12,6 +12,9 @@ import React, { useEffect, useState } from "react"
 import PenPicker from "./PenPicker"
 import { PenChosenData } from "@/app/canvas/page"
 import { useUser } from "@/app/UserProvider"
+import QuestionMasterSayingTheme from "./QuestionMasterSayingTheme"
+import QuestionMasterThinking from "./QuestionMasterThinking"
+import SlidingFlippingTitleCard from "./SlidingFlippingTitleCard"
 
 const sendWebSocketMessage = (socket: WebSocket | null, data: object) => {
   if (!socket) return
@@ -24,7 +27,6 @@ const sendWebSocketMessage = (socket: WebSocket | null, data: object) => {
     send()
   } else {
     socket.addEventListener("open", send)
-    // Cleanup listener
     return () => {
       socket.removeEventListener("open", send)
     }
@@ -42,12 +44,29 @@ const PlayerDialog = ({
   gameCode: string
   allPlayersConfirmedColor: boolean
 }) => {
-  const { hexCodeOfColorChosen, username } = useUser()
+  const {
+    hexCodeOfColorChosen,
+    username,
+    themeChosenByQuestionMaster,
+    titleChosenByQuestionMaster,
+  } = useUser()
   const [isOpen, setIsOpen] = useState(true)
   const [isBackDropOpen, setIsBackDropOpen] = useState(false)
+  const [
+    canRenderQuestionMasterAnimation,
+    setCanRenderQuestionMasterAnimation,
+  ] = useState(false)
+  const [showSlidingImage, setShowSlidingImage] = useState(false)
+  const handleAnimationEnd = () => {
+    setTimeout(() => {
+      setShowSlidingImage(true)
+    }, 3000)
+  }
 
   useEffect(() => {
-    setIsBackDropOpen(false)
+    if (allPlayersConfirmedColor) {
+      setCanRenderQuestionMasterAnimation(true)
+    }
   }, [allPlayersConfirmedColor])
 
   const handleClick = () => {
@@ -114,11 +133,51 @@ const PlayerDialog = ({
         open={isBackDropOpen}
         sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
       >
-        <Typography variant="h5" fontWeight={"bold"}>
-          Waiting for all players to select their pen...
-        </Typography>
+        <QuestionMasterAnimations
+          canRenderQuestionMasterAnimation={canRenderQuestionMasterAnimation}
+          themeChosenByQuestionMaster={themeChosenByQuestionMaster}
+          showSlidingImage={showSlidingImage}
+          handleAnimationEnd={handleAnimationEnd}
+          titleChosenByQuestionMaster={titleChosenByQuestionMaster}
+        />
       </Backdrop>
     </>
+  )
+}
+
+const QuestionMasterAnimations = ({
+  canRenderQuestionMasterAnimation,
+  themeChosenByQuestionMaster,
+  showSlidingImage,
+  handleAnimationEnd,
+  titleChosenByQuestionMaster,
+}: {
+  canRenderQuestionMasterAnimation: boolean
+  themeChosenByQuestionMaster: string
+  showSlidingImage: boolean
+  handleAnimationEnd: () => void
+  titleChosenByQuestionMaster: string
+}) => {
+  if (canRenderQuestionMasterAnimation) {
+    if (themeChosenByQuestionMaster !== "") {
+      if (showSlidingImage) {
+        return <SlidingFlippingTitleCard title={titleChosenByQuestionMaster} />
+      } else {
+        return (
+          <QuestionMasterSayingTheme
+            theme={themeChosenByQuestionMaster}
+            onAnimationEnd={handleAnimationEnd}
+          />
+        )
+      }
+    } else {
+      return <QuestionMasterThinking />
+    }
+  }
+  return (
+    <Typography variant="h5" fontWeight={"bold"}>
+      Waiting for all players to select their pen...
+    </Typography>
   )
 }
 
