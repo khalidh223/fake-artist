@@ -7,6 +7,7 @@ import type { Metadata } from "next"
 import ThemeRegistry from "./ThemeRegistry"
 import { DrawSocketProvider } from "@/app/DrawSocketProvider"
 import { UserProvider } from "./UserProvider"
+import { Head } from "next/document"
 
 export const metadata: Metadata = {
   title: "Fake Artist Online",
