@@ -41,7 +41,19 @@ const QuestionMasterDialog = ({
   const [isOpen, setIsOpen] = useState(true)
   const [isBackDropOpen, setIsBackDropOpen] = useState(false)
 
-  const { playerSocket } = useUser()
+  const {
+    playerSocket,
+    setShowQMChip,
+    setCurrentPlayerDrawing,
+    players,
+    username,
+    setThemeChosenByQuestionMaster,
+    setTitleChosenByQuestionMaster,
+    setExittedTitleCard,
+    themeChosenByQuestionMaster,
+    titleChosenByQuestionMaster,
+    currentPlayerDrawing
+  } = useUser()
 
   const isDoneDisabled = !theme.trim() || !title.trim()
 
@@ -51,6 +63,20 @@ const QuestionMasterDialog = ({
     }
   }, [allPlayersConfirmedColor, isOpen])
 
+  useEffect(() => {
+    if (
+      themeChosenByQuestionMaster != "" &&
+      titleChosenByQuestionMaster != "" &&
+      allPlayersConfirmedColor
+    ) {
+      setShowQMChip(true)
+    }
+  }, [
+    themeChosenByQuestionMaster,
+    titleChosenByQuestionMaster,
+    allPlayersConfirmedColor,
+  ])
+
   const handleClickDone = () => {
     sendWebSocketMessage(playerSocket, {
       action: "sendThemeAndTitleChosenByQuestionMaster",
@@ -58,8 +84,19 @@ const QuestionMasterDialog = ({
       title: title,
       gameCode,
     })
+    setThemeChosenByQuestionMaster(theme)
+    setTitleChosenByQuestionMaster(title)
+    setExittedTitleCard(true)
     setIsOpen(false)
     setIsBackDropOpen(true)
+    if (players != null) {
+      const sortedPlayers = players
+        .sort()
+        .filter((player) => player != username)
+      if (currentPlayerDrawing == "") {
+        setCurrentPlayerDrawing(sortedPlayers[0])
+      }
+    }
   }
 
   return (

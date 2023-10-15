@@ -3,13 +3,53 @@ import { useEffect, useRef, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { useDrawSocket } from "../../app/DrawSocketProvider"
 import { Socket } from "socket.io-client"
+import { useUser } from "@/app/UserProvider"
 
-const DrawCanvas: React.FC = () => {
+const MAX_DRAWINGS = 2
+
+const sendWebSocketMessage = (socket: WebSocket | null, data: object) => {
+  if (!socket) return
+
+  const send = () => {
+    socket.send(JSON.stringify(data))
+  }
+
+  if (socket.readyState === WebSocket.OPEN) {
+    send()
+  } else {
+    socket.addEventListener("open", send)
+    return () => {
+      socket.removeEventListener("open", send)
+    }
+  }
+}
+
+const DrawCanvas = ({
+  canvasWebSocket,
+}: {
+  canvasWebSocket: WebSocket | null
+}) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const lastCoords = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const [color, setColor] = useState<string>("#00FF00")
+  const numberOfDrawingsRef = useRef(0);
   const drawingRef = useRef<boolean>(false)
   const gameCode = useGameCode()
+  const { hexCodeOfColorChosen, setCanvasDimensions, players, username } =
+    useUser()
+
+  useEffect(() => {
+    if (canvasRef.current) {
+      const rect = canvasRef.current.getBoundingClientRect()
+      setCanvasDimensions({ width: rect.width, height: rect.height })
+    }
+  }, [])
+
+  useEffect(() => {
+    if (hexCodeOfColorChosen != null) {
+      setColor(hexCodeOfColorChosen)
+    }
+  }, [hexCodeOfColorChosen])
 
   const drawCanvasSocket = useDrawSocket()
 
@@ -25,7 +65,12 @@ const DrawCanvas: React.FC = () => {
         drawCanvasSocket,
         gameCode,
         drawingRef,
-        lastCoords
+        lastCoords,
+        numberOfDrawingsRef,
+        players,
+        sendWebSocketMessage,
+        username,
+        canvasWebSocket
       ),
     [color, drawCanvasSocket, gameCode]
   )
@@ -84,18 +129,37 @@ const setupCanvasListeners = (
   socket: Socket | null,
   gameCode: string,
   drawingRef: React.MutableRefObject<boolean>,
-  lastCoords: React.MutableRefObject<{ x: number; y: number } | null>
+  lastCoords: React.MutableRefObject<{ x: number; y: number } | null>,
+  numberOfDrawingsRef: React.MutableRefObject<number>,
+  players: string[] | null,
+  sendWebSocketMessage: (
+    socket: WebSocket | null,
+    data: object
+  ) => (() => void) | undefined,
+  username: string,
+  canvasWebSocket: WebSocket | null
 ) => {
   const canvas = canvasRef.current
   if (!canvas) return
 
   const onMouseDown = (event: MouseEvent) => {
+    numberOfDrawingsRef.current += 1
     if (drawingRef.current !== undefined) drawingRef.current = true
     if (lastCoords.current)
       lastCoords.current = { x: event.offsetX, y: event.offsetY }
   }
 
-  const stopDrawing = () => (drawingRef.current = false)
+  const stopDrawing = () => {
+    if (numberOfDrawingsRef.current === MAX_DRAWINGS && players != null) {
+      sendWebSocketMessage(canvasWebSocket, {
+        action: "sendPlayerStoppedDrawing",
+        username: username,
+        gameCode,
+      })
+      numberOfDrawingsRef.current = 0
+    }
+    drawingRef.current = false
+  }
 
   const onMouseMove = (event: MouseEvent) => {
     if (!drawingRef.current || !lastCoords.current) return
@@ -123,8 +187,15 @@ const setupCanvasListeners = (
 
   canvas.addEventListener("mousedown", onMouseDown)
   canvas.addEventListener("mouseup", stopDrawing)
-  canvas.addEventListener("mouseout", stopDrawing)
   canvas.addEventListener("mousemove", onMouseMove)
+
+  return () => {
+    if (canvas) {
+      canvas.removeEventListener("mousedown", onMouseDown)
+      canvas.removeEventListener("mouseup", stopDrawing)
+      canvas.removeEventListener("mousemove", onMouseMove)
+    }
+  }
 }
 
 type DrawingData = {
