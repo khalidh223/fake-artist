@@ -54,7 +54,7 @@ const PlayerDialog = ({
     closeSlidingImage,
     setCloseSlidingImage,
     setExittedTitleCard,
-    currentPlayerDrawing
+    currentPlayerDrawing,
   } = useUser()
   console.log("themeChosenByQuestionMaster: ", themeChosenByQuestionMaster)
   console.log("titleChosenByQuestionMaster: ", titleChosenByQuestionMaster)
