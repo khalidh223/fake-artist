@@ -10,7 +10,11 @@ interface UserContextValue {
   connectionId: string
   setConnectionId: React.Dispatch<React.SetStateAction<string>>,
   hexCodeOfColorChosen: string | null,
-  setHexCodeOfColorChosen: React.Dispatch<React.SetStateAction<string | null>>
+  setHexCodeOfColorChosen: React.Dispatch<React.SetStateAction<string | null>>,
+  titleChosenByQuestionMaster: string
+  setTitleChosenByQuestionMaster: React.Dispatch<React.SetStateAction<string>>,
+  themeChosenByQuestionMaster: string
+  setThemeChosenByQuestionMaster: React.Dispatch<React.SetStateAction<string>>,
 }
 
 const UserContext = createContext<UserContextValue | undefined>(undefined)
@@ -24,6 +28,8 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [playerSocket, setPlayerSocket] = useState<WebSocket | null>(null)
   const [connectionId, setConnectionId] = useState<string>("")
   const [hexCodeOfColorChosen, setHexCodeOfColorChosen] = useState<string | null>(null)
+  const [themeChosenByQuestionMaster, setThemeChosenByQuestionMaster] = useState<string>("")
+  const [titleChosenByQuestionMaster, setTitleChosenByQuestionMaster] = useState<string>("")
 
   return (
     <UserContext.Provider
@@ -35,7 +41,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         connectionId,
         setConnectionId,
         hexCodeOfColorChosen,
-        setHexCodeOfColorChosen
+        setHexCodeOfColorChosen,
+        titleChosenByQuestionMaster,
+        setTitleChosenByQuestionMaster,
+        themeChosenByQuestionMaster,
+        setThemeChosenByQuestionMaster
       }}
     >
       {children}

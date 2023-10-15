@@ -7,6 +7,7 @@ import type { Metadata } from "next"
 import ThemeRegistry from "./ThemeRegistry"
 import { DrawSocketProvider } from "@/app/DrawSocketProvider"
 import { UserProvider } from "./UserProvider"
+import { Head } from "next/document"
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -20,6 +21,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Caveat+Brush&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body>
         <DrawSocketProvider>
           <UserProvider>

@@ -118,7 +118,7 @@ const ColorBox: React.FC<ColorBoxProps> = ({
 }) => {
   const isUnavailable = playersSelectedColors[color] || selectedColor === color
   const imgWidth = getImageWidth(color)
-  const imgHeight = 136 // height seems consistent for all images
+  const imgHeight = 136
 
   return (
     <Box
