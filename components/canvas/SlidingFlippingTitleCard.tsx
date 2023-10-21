@@ -2,7 +2,7 @@ import * as React from "react"
 import { styled, keyframes } from "@mui/system"
 import Box from "@mui/material/Box"
 import Typography from "@mui/material/Typography"
-import { Card as MuiCard } from "@mui/material"
+import { Button } from "@mui/material"
 
 const slideIn = keyframes`
   from {
@@ -92,7 +92,18 @@ const CornerImage = styled(({ src, ...other }: CornerImageProps) => (
   backgroundPosition: "center",
 }))
 
-const SlidingFlippingTitleCard = ({ title }: { title: string | null }) => {
+const StyledButton = styled(Button)({
+  borderColor: "#F10A7E",
+  color: "#F10A7E",
+})
+
+const SlidingFlippingTitleCard = ({
+  title,
+  handleExitCard,
+}: {
+  title: string | null
+  handleExitCard: () => void
+}) => {
   return (
     <ImageContainer>
       <Card>
@@ -113,6 +124,11 @@ const SlidingFlippingTitleCard = ({ title }: { title: string | null }) => {
               >
                 {title ? title : "X"}
               </Typography>
+            </Box>
+            <Box>
+              <StyledButton variant="outlined" onClick={handleExitCard}>
+                Okay
+              </StyledButton>
             </Box>
           </Box>
           <CornerImage
