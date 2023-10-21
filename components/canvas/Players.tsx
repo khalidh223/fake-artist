@@ -1,6 +1,7 @@
 "use client"
-import React, { useEffect, useState } from "react"
+import React, { useEffect } from "react"
 import { Box, Skeleton, Typography } from "@mui/material"
+import { useUser } from "@/app/UserProvider"
 
 const Players = ({
   socket,
@@ -11,29 +12,32 @@ const Players = ({
   gameCode: string
   questionMaster: string | null
 }) => {
-  const [players, setPlayers] = useState<string[] | null>(null)
+  const { players, currentPlayerDrawing } = useUser()
 
-  useSetupWebSocket(gameCode, setPlayers, socket)
+  useSetupWebSocket(gameCode, socket)
 
   return (
     <StyledPlayersBox>
       <PlayerHeader />
-      {players == null ? <LoadingPlayers /> : <PlayerList players={players} questionMaster={questionMaster}/>}
+      {players == null ? (
+        <LoadingPlayers />
+      ) : (
+        <PlayerList
+          players={players.sort()}
+          questionMaster={questionMaster}
+          currentPlayerDrawing={currentPlayerDrawing}
+        />
+      )}
     </StyledPlayersBox>
   )
 }
 
-const useSetupWebSocket = (
-  gameCode: string,
-  setPlayers: React.Dispatch<React.SetStateAction<string[] | null>>,
-  socket: WebSocket | null
-) => {
+const useSetupWebSocket = (gameCode: string, socket: WebSocket | null) => {
   useEffect(() => {
     if (socket) {
       requestPlayersFromServer(socket, gameCode)
-      socket.onmessage = (event) => updatePlayersFromServer(event, setPlayers)
     }
-  }, [socket, gameCode, setPlayers])
+  }, [socket, gameCode])
 }
 
 const requestPlayersFromServer = (socket: WebSocket, gameCode: string) => {
@@ -42,13 +46,6 @@ const requestPlayersFromServer = (socket: WebSocket, gameCode: string) => {
     gameCode: gameCode,
   }
   socket.send(JSON.stringify(getPlayers))
-}
-
-const updatePlayersFromServer = (event: any, setPlayers: any) => {
-  const data = JSON.parse(event.data)
-  if (data.action === "listOfPlayers") {
-    setPlayers(data.players)
-  }
 }
 
 const StyledPlayersBox = ({ children }: any) => (
@@ -110,10 +107,23 @@ const TypographySkeleton = (props: any) => (
   </Typography>
 )
 
-const PlayerList = ({ players, questionMaster }: { players: string[], questionMaster: string | null }) => (
+const PlayerList = ({
+  players,
+  questionMaster,
+  currentPlayerDrawing,
+}: {
+  players: string[]
+  questionMaster: string | null
+  currentPlayerDrawing: string
+}) => (
   <>
     {players.map((player, idx) => (
-      <PlayerItem key={idx} player={player} questionMaster={questionMaster} />
+      <PlayerItem
+        key={idx}
+        player={player}
+        questionMaster={questionMaster}
+        underlinePlayer={player === currentPlayerDrawing}
+      />
     ))}
   </>
 )
@@ -121,9 +131,11 @@ const PlayerList = ({ players, questionMaster }: { players: string[], questionMa
 const PlayerItem = ({
   player,
   questionMaster,
+  underlinePlayer,
 }: {
   player: string
   questionMaster: string | null
+  underlinePlayer: boolean
 }) => (
   <Box
     display="flex"
@@ -134,7 +146,7 @@ const PlayerItem = ({
   >
     <Box display="flex" alignItems="center">
       <PlayerImage questionMaster={questionMaster} name={player} />
-      <PlayerName name={player} />
+      <PlayerName name={player} underlinePlayer={underlinePlayer} />
     </Box>
     <Coins />
   </Box>
@@ -166,9 +178,9 @@ const CoinSection = ({
 
 const PlayerImage = ({
   questionMaster,
-  name
+  name,
 }: {
-  questionMaster: string | null,
+  questionMaster: string | null
   name: string
 }) => {
   if (questionMaster == name) {
@@ -200,8 +212,21 @@ const PlayerImage = ({
   )
 }
 
-const PlayerName = ({ name }: { name: string }) => (
-  <Typography variant="body1" sx={{ fontSize: 18, fontWeight: "bold" }}>
+const PlayerName = ({
+  name,
+  underlinePlayer,
+}: {
+  name: string
+  underlinePlayer: boolean
+}) => (
+  <Typography
+    variant="body1"
+    sx={{
+      fontSize: 18,
+      fontWeight: "bold",
+      textDecoration: underlinePlayer ? "underline" : "none",
+    }}
+  >
     {name}
   </Typography>
 )

@@ -44,9 +44,18 @@ const FakeArtistDialog = ({
   gameCode: string
   allPlayersConfirmedColor: boolean
 }) => {
-  const { hexCodeOfColorChosen, username, themeChosenByQuestionMaster } =
-    useUser()
-  console.log("themeChosenByQuestionMaster: ", themeChosenByQuestionMaster)
+  const {
+    hexCodeOfColorChosen,
+    username,
+    themeChosenByQuestionMaster,
+    setCurrentPlayerDrawing,
+    players,
+    questionMaster,
+    closeSlidingImage,
+    setCloseSlidingImage,
+    setExittedTitleCard,
+    currentPlayerDrawing,
+  } = useUser()
   const [isOpen, setIsOpen] = useState(true)
   const [isBackDropOpen, setIsBackDropOpen] = useState(false)
   const [
@@ -58,6 +67,20 @@ const FakeArtistDialog = ({
     setTimeout(() => {
       setShowSlidingImage(true)
     }, 3000)
+  }
+
+  const handleExitCard = () => {
+    if (players != null) {
+      const sortedPlayers = players
+        .sort()
+        .filter((player) => player != questionMaster)
+      setExittedTitleCard(true)
+      if (currentPlayerDrawing == "") {
+        setCurrentPlayerDrawing(sortedPlayers[0])
+      }
+      setCloseSlidingImage(true)
+      setIsBackDropOpen(false)
+    }
   }
 
   useEffect(() => {
@@ -136,6 +159,8 @@ const FakeArtistDialog = ({
           themeChosenByQuestionMaster={themeChosenByQuestionMaster}
           showSlidingImage={showSlidingImage}
           handleAnimationEnd={handleAnimationEnd}
+          handleExitCard={handleExitCard}
+          closeSlidingImage={closeSlidingImage}
         />
       </Backdrop>
     </>
@@ -147,16 +172,27 @@ const QuestionMasterAnimations = ({
   themeChosenByQuestionMaster,
   showSlidingImage,
   handleAnimationEnd,
+  handleExitCard,
+  closeSlidingImage,
 }: {
   canRenderQuestionMasterAnimation: boolean
   themeChosenByQuestionMaster: string
   showSlidingImage: boolean
   handleAnimationEnd: () => void
+  handleExitCard: () => void
+  closeSlidingImage: boolean
 }) => {
   if (canRenderQuestionMasterAnimation) {
     if (themeChosenByQuestionMaster !== "") {
       if (showSlidingImage) {
-        return <SlidingFlippingTitleCard title={null} />
+        return (
+          !closeSlidingImage && (
+            <SlidingFlippingTitleCard
+              title={null}
+              handleExitCard={handleExitCard}
+            />
+          )
+        )
       } else {
         return (
           <QuestionMasterSayingTheme

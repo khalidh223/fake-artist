@@ -49,6 +49,12 @@ const PlayerDialog = ({
     username,
     themeChosenByQuestionMaster,
     titleChosenByQuestionMaster,
+    setCurrentPlayerDrawing,
+    questionMaster,
+    closeSlidingImage,
+    setCloseSlidingImage,
+    setExittedTitleCard,
+    currentPlayerDrawing
   } = useUser()
   console.log("themeChosenByQuestionMaster: ", themeChosenByQuestionMaster)
   console.log("titleChosenByQuestionMaster: ", titleChosenByQuestionMaster)
@@ -59,6 +65,9 @@ const PlayerDialog = ({
     setCanRenderQuestionMasterAnimation,
   ] = useState(false)
   const [showSlidingImage, setShowSlidingImage] = useState(false)
+
+  const { players } = useUser()
+
   const handleAnimationEnd = () => {
     setTimeout(() => {
       setShowSlidingImage(true)
@@ -81,6 +90,21 @@ const PlayerDialog = ({
     setIsOpen(false)
     setIsBackDropOpen(true)
   }
+
+  const handleExitCard = () => {
+    if (players != null) {
+      const sortedPlayers = players
+        .sort()
+        .filter((player: string) => player != questionMaster)
+      setExittedTitleCard(true)
+      if (currentPlayerDrawing == "") {
+        setCurrentPlayerDrawing(sortedPlayers[0])
+      }
+      setCloseSlidingImage(true)
+      setIsBackDropOpen(false)
+    }
+  }
+
   return (
     <>
       <Dialog open={isOpen} fullWidth maxWidth="xs">
@@ -141,6 +165,8 @@ const PlayerDialog = ({
           showSlidingImage={showSlidingImage}
           handleAnimationEnd={handleAnimationEnd}
           titleChosenByQuestionMaster={titleChosenByQuestionMaster}
+          handleExitCard={handleExitCard}
+          closeSlidingImage={closeSlidingImage}
         />
       </Backdrop>
     </>
@@ -153,17 +179,28 @@ const QuestionMasterAnimations = ({
   showSlidingImage,
   handleAnimationEnd,
   titleChosenByQuestionMaster,
+  handleExitCard,
+  closeSlidingImage,
 }: {
   canRenderQuestionMasterAnimation: boolean
   themeChosenByQuestionMaster: string
   showSlidingImage: boolean
   handleAnimationEnd: () => void
   titleChosenByQuestionMaster: string
+  handleExitCard: () => void
+  closeSlidingImage: boolean
 }) => {
   if (canRenderQuestionMasterAnimation) {
     if (themeChosenByQuestionMaster !== "") {
       if (showSlidingImage) {
-        return <SlidingFlippingTitleCard title={titleChosenByQuestionMaster} />
+        return (
+          !closeSlidingImage && (
+            <SlidingFlippingTitleCard
+              title={titleChosenByQuestionMaster}
+              handleExitCard={handleExitCard}
+            />
+          )
+        )
       } else {
         return (
           <QuestionMasterSayingTheme
