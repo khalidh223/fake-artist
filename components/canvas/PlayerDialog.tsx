@@ -54,7 +54,7 @@ const PlayerDialog = ({
     closeSlidingImage,
     setCloseSlidingImage,
     setExittedTitleCard,
-    currentPlayerDrawing
+    currentPlayerDrawing,
   } = useUser()
   const [isOpen, setIsOpen] = useState(true)
   const [isBackDropOpen, setIsBackDropOpen] = useState(false)

@@ -54,9 +54,8 @@ type StyledSketchpadBoxProps = {
 const StyledSketchpadBox = ({ children }: StyledSketchpadBoxProps) => (
   <Box
     sx={{
-      width: "33%",
-      maxWidth: "500px",
-      height: "80vh",
+      width: "614px",
+      height: "800px",
       bgcolor: "white",
       position: "relative",
       p: 2,

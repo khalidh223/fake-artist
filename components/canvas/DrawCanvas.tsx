@@ -32,11 +32,18 @@ const DrawCanvas = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const lastCoords = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const [color, setColor] = useState<string>("#00FF00")
-  const numberOfDrawingsRef = useRef(0);
+  const numberOfDrawingsRef = useRef(0)
   const drawingRef = useRef<boolean>(false)
   const gameCode = useGameCode()
   const { hexCodeOfColorChosen, setCanvasDimensions, players, username } =
     useUser()
+
+  useEffect(() => {
+    if (canvasRef.current) {
+      canvasRef.current.width = 614
+      canvasRef.current.height = 800
+    }
+  }, [])
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -75,22 +82,9 @@ const DrawCanvas = ({
     [color, drawCanvasSocket, gameCode]
   )
 
-  useEffect(() => {
-    const resizeCanvas = () => {
-      if (canvasRef.current && canvasRef.current.parentElement) {
-        canvasRef.current.width = canvasRef.current.parentElement.clientWidth
-        canvasRef.current.height = canvasRef.current.parentElement.clientHeight
-      }
-    }
-
-    resizeCanvas()
-    window.addEventListener("resize", resizeCanvas)
-    return () => window.removeEventListener("resize", resizeCanvas)
-  }, [])
-
   return (
-    <div style={{ width: "100%", height: "100%" }}>
-      <canvas ref={canvasRef} style={{ width: "100%", height: "100%" }} />
+    <div style={{ width: "614px", height: "800px" }}>
+      <canvas ref={canvasRef} />
     </div>
   )
 }
@@ -219,7 +213,7 @@ const draw = (
 
   context.beginPath()
   context.strokeStyle = color
-  context.lineWidth = 2
+  context.lineWidth = 4
   context.moveTo(prevX, prevY)
   context.lineTo(x, y)
   context.stroke()
