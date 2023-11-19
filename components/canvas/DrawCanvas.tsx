@@ -4,38 +4,28 @@ import { useSearchParams } from "next/navigation"
 import { useDrawSocket } from "../../app/DrawSocketProvider"
 import { Socket } from "socket.io-client"
 import { useUser } from "@/app/UserProvider"
+import { sendWebSocketMessage } from "./utils"
 
 const MAX_DRAWINGS = 2
-
-const sendWebSocketMessage = (socket: WebSocket | null, data: object) => {
-  if (!socket) return
-
-  const send = () => {
-    socket.send(JSON.stringify(data))
-  }
-
-  if (socket.readyState === WebSocket.OPEN) {
-    send()
-  } else {
-    socket.addEventListener("open", send)
-    return () => {
-      socket.removeEventListener("open", send)
-    }
-  }
-}
+const MAX_ROUNDS = 2
 
 const DrawCanvas = ({
   canvasWebSocket,
+  youAreCurrentlyDrawing,
+  questionMaster,
 }: {
   canvasWebSocket: WebSocket | null
+  youAreCurrentlyDrawing: boolean
+  questionMaster: string | null
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const lastCoords = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const [color, setColor] = useState<string>("#00FF00")
   const numberOfDrawingsRef = useRef(0)
+  const currentRoundRef = useRef(0)
   const drawingRef = useRef<boolean>(false)
   const gameCode = useGameCode()
-  const { hexCodeOfColorChosen, setCanvasDimensions, players, username } =
+  const { hexCodeOfColorChosen, setCanvasDimensions, players, username, gameEnded, setCanvasBitmapAtEndOfGame } =
     useUser()
 
   useEffect(() => {
@@ -58,6 +48,16 @@ const DrawCanvas = ({
     }
   }, [hexCodeOfColorChosen])
 
+  useEffect(() => {
+    if (gameEnded) {
+      if (canvasRef.current) {
+        const imageDataUrl = canvasRef.current.toDataURL("image/png")
+        setCanvasBitmapAtEndOfGame(imageDataUrl)
+      }
+    }
+
+  }, [gameEnded])
+
   const drawCanvasSocket = useDrawSocket()
 
   useEffect(
@@ -74,10 +74,13 @@ const DrawCanvas = ({
         drawingRef,
         lastCoords,
         numberOfDrawingsRef,
+        currentRoundRef,
         players,
         sendWebSocketMessage,
         username,
-        canvasWebSocket
+        canvasWebSocket,
+        youAreCurrentlyDrawing,
+        questionMaster
       ),
     [color, drawCanvasSocket, gameCode]
   )
@@ -125,13 +128,16 @@ const setupCanvasListeners = (
   drawingRef: React.MutableRefObject<boolean>,
   lastCoords: React.MutableRefObject<{ x: number; y: number } | null>,
   numberOfDrawingsRef: React.MutableRefObject<number>,
+  currentRoundRef: React.MutableRefObject<number>,
   players: string[] | null,
   sendWebSocketMessage: (
     socket: WebSocket | null,
     data: object
   ) => (() => void) | undefined,
   username: string,
-  canvasWebSocket: WebSocket | null
+  canvasWebSocket: WebSocket | null,
+  youAreCurrentlyDrawing: boolean,
+  questionMaster: string | null
 ) => {
   const canvas = canvasRef.current
   if (!canvas) return
@@ -144,14 +150,37 @@ const setupCanvasListeners = (
   }
 
   const stopDrawing = () => {
-    if (numberOfDrawingsRef.current === MAX_DRAWINGS && players != null) {
+    const isLastSortedPlayer =
+      players?.sort().filter((player) => player != questionMaster)[
+        players.length - 2
+      ] === username && youAreCurrentlyDrawing
+
+    if (
+      numberOfDrawingsRef.current === MAX_DRAWINGS - 1 &&
+      currentRoundRef.current === MAX_ROUNDS - 1 &&
+      isLastSortedPlayer
+    ) {
+      sendWebSocketMessage(canvasWebSocket, {
+        action: "sendStopGame",
+        gameCode,
+      })
+      currentRoundRef.current = 0
+    }
+
+    if (
+      numberOfDrawingsRef.current === MAX_DRAWINGS &&
+      currentRoundRef.current !== MAX_ROUNDS &&
+      players != null
+    ) {
       sendWebSocketMessage(canvasWebSocket, {
         action: "sendPlayerStoppedDrawing",
         username: username,
         gameCode,
       })
       numberOfDrawingsRef.current = 0
+      currentRoundRef.current += 1
     }
+
     drawingRef.current = false
   }
 

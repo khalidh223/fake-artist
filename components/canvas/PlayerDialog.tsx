@@ -15,23 +15,7 @@ import { useUser } from "@/app/UserProvider"
 import QuestionMasterSayingTheme from "./QuestionMasterSayingTheme"
 import QuestionMasterThinking from "./QuestionMasterThinking"
 import SlidingFlippingTitleCard from "./SlidingFlippingTitleCard"
-
-const sendWebSocketMessage = (socket: WebSocket | null, data: object) => {
-  if (!socket) return
-
-  const send = () => {
-    socket.send(JSON.stringify(data))
-  }
-
-  if (socket.readyState === WebSocket.OPEN) {
-    send()
-  } else {
-    socket.addEventListener("open", send)
-    return () => {
-      socket.removeEventListener("open", send)
-    }
-  }
-}
+import { sendWebSocketMessage } from "./utils"
 
 const PlayerDialog = ({
   penChosen,

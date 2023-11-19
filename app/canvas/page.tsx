@@ -3,11 +3,17 @@ import Players from "@/components/canvas/Players"
 import Sketchpad from "@/components/canvas/Sketchpad"
 import Box from "@mui/material/Box"
 import { useEffect, useState } from "react"
-import { PlayerToConfirmedHexColorMap, useUser } from "../UserProvider"
+import {
+  PlayerToConfirmedHexColorMap,
+  PlayerToNumberOfFakeArtistVotes,
+  useUser,
+} from "../UserProvider"
 import { useSearchParams } from "next/navigation"
 import QuestionMasterDialog from "@/components/canvas/QuestionMasterDialog"
 import FakeArtistDialog from "@/components/canvas/FakeArtistDialog"
 import PlayerDialog from "@/components/canvas/PlayerDialog"
+import CombinedPickFakeArtistAndCanvasDisplay from "@/components/canvas/CombinedPickFakeArtistAndCanvasDisplay"
+import { sendWebSocketMessage } from "@/components/canvas/utils"
 
 const useGameCode = () => {
   const params = useSearchParams()
@@ -26,23 +32,6 @@ const useWebSocket = (url: string) => {
   }, [url])
 
   return socket
-}
-
-const sendWebSocketMessage = (socket: WebSocket | null, data: object) => {
-  if (!socket) return
-
-  const send = () => {
-    socket.send(JSON.stringify(data))
-  }
-
-  if (socket.readyState === WebSocket.OPEN) {
-    send()
-  } else {
-    socket.addEventListener("open", send)
-    return () => {
-      socket.removeEventListener("open", send)
-    }
-  }
 }
 
 const useSendRoleToPlayer = (
@@ -83,18 +72,6 @@ const useAddEventListenerToCanvasWebSocket = (
   }, [canvasSocket])
 }
 
-function getNextElement<T>(array: T[], currentElement: T): T | null {
-  const currentIndex = array.indexOf(currentElement)
-
-  if (currentIndex === -1) {
-    return null
-  }
-
-  const nextIndex = (currentIndex + 1) % array.length
-
-  return array[nextIndex]
-}
-
 export type PenChosenData = {
   color: string
   username: string
@@ -117,7 +94,13 @@ const useAddEventListenerToPlayerSocket = (
   players: string[] | null,
   setPlayers: React.Dispatch<React.SetStateAction<string[] | null>>,
   questionMaster: string | null,
-  currentPlayerDrawing: string
+  currentPlayerDrawing: string,
+  setGameEnded: React.Dispatch<React.SetStateAction<boolean>>,
+  playerToNumberOfFakeArtistVotes: PlayerToNumberOfFakeArtistVotes,
+  setPlayerToNumberOfFakeArtistVotes: React.Dispatch<
+    React.SetStateAction<PlayerToNumberOfFakeArtistVotes>
+  >,
+  setFakeArtist: React.Dispatch<React.SetStateAction<string>>
 ) => {
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -146,16 +129,22 @@ const useAddEventListenerToPlayerSocket = (
         setThemeChosenByQuestionMaster(data.theme)
       } else if (data.action === "setTitleChosenByQuestionMaster") {
         setTitleChosenByQuestionMaster(data.title)
-      } else if (data.action === "setPlayerStoppedDrawing") {
-        if (players != null) {
-          const sortedPlayers = players
-            .sort()
-            .filter((player) => player != questionMaster)
-
-          setCurrentPlayerDrawing(
-            getNextElement(sortedPlayers, data.player) ?? ""
-          )
-        }
+      } else if (data.action === "nextPlayerToDraw") {
+        setCurrentPlayerDrawing(data.next_player)
+      } else if (data.action === "setStopGame") {
+        setGameEnded(true)
+      } else if (data.action === "votedForPlayerToBeFakeArtist") {
+        setPlayerToNumberOfFakeArtistVotes((prevPlayers) => {
+          const playerToVotes = { ...prevPlayers }
+          if (!(data.player in playerToVotes)) {
+            playerToVotes[data.player] = 1
+            return playerToVotes
+          }
+          playerToVotes[data.player] += 1
+          return playerToVotes
+        })
+      } else if (data.action === "setFakeArtist") {
+        setFakeArtist(data.fakeArtist)
       }
     }
 
@@ -211,6 +200,12 @@ export default function Home() {
     exittedTitleCard,
     titleChosenByQuestionMaster,
     themeChosenByQuestionMaster,
+    setGameEnded,
+    gameEnded,
+    canvasBitmapAtEndOfGame,
+    playerToNumberOfFakeArtistVotes,
+    setPlayerToNumberOfFakeArtistVotes,
+    setFakeArtist
   } = useUser()
 
   const [role, setRole] = useState<
@@ -236,7 +231,11 @@ export default function Home() {
     players,
     setPlayers,
     questionMaster,
-    currentPlayerDrawing
+    currentPlayerDrawing,
+    setGameEnded,
+    playerToNumberOfFakeArtistVotes,
+    setPlayerToNumberOfFakeArtistVotes,
+    setFakeArtist
   )
 
   useSendQuestionMaster(allPlayersHaveARole, gameCode, canvasWebSocket)
@@ -281,6 +280,13 @@ export default function Home() {
         theme={themeChosenByQuestionMaster}
         exittedTitleCard={exittedTitleCard}
       />
+      {gameEnded ? (
+        <CombinedPickFakeArtistAndCanvasDisplay
+          canvasWebSocket={canvasWebSocket}
+          imageDataUrl={canvasBitmapAtEndOfGame}
+          gameCode={gameCode}
+        />
+      ) : null}
     </Box>
   )
 }

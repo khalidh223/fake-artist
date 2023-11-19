@@ -121,6 +121,7 @@ const ContentBox = ({
     allPlayersConfirmedColor,
     themeChosenByQuestionMaster,
     titleChosenByQuestionMaster,
+    gameEnded,
   } = useUser()
 
   enum OverlayStatuses {
@@ -164,15 +165,18 @@ const ContentBox = ({
     return (
       (youAreNotCurrentlyDrawing &&
         youClosedTheTitleCard &&
-        allPlayersConfirmedColor) ||
+        allPlayersConfirmedColor &&
+        !gameEnded) ||
       (youAreTheQuestionMaster &&
         showQMChip &&
         allPlayersConfirmedColor &&
-        themeAndTitleChosenByQuestionMaster) ||
+        themeAndTitleChosenByQuestionMaster &&
+        !gameEnded) ||
       (youAreTheQuestionMaster &&
         closedQMChip &&
         allPlayersConfirmedColor &&
-        themeAndTitleChosenByQuestionMaster)
+        themeAndTitleChosenByQuestionMaster &&
+        !gameEnded)
     )
   }
 
@@ -182,7 +186,8 @@ const ContentBox = ({
     return (
       youAreCurrentlyDrawing &&
       youClosedTheTitleCard &&
-      allPlayersConfirmedColor
+      allPlayersConfirmedColor &&
+      !gameEnded
     )
   }
 
@@ -236,7 +241,11 @@ const ContentBox = ({
       }}
     >
       <PositionedBox onClick={handleBoxClick}>
-        <DrawCanvas canvasWebSocket={canvasWebSocket} />
+        <DrawCanvas
+          canvasWebSocket={canvasWebSocket}
+          youAreCurrentlyDrawing={youAreCurrentlyDrawing}
+          questionMaster={questionMaster}
+        />
         <Box
           sx={
             overlayStatus !== OverlayStatuses.CLOSED ||
