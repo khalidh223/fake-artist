@@ -43,6 +43,16 @@ interface UserContextValue {
   setAllPlayersConfirmedColor: React.Dispatch<React.SetStateAction<boolean>>
   exittedTitleCard: boolean
   setExittedTitleCard: React.Dispatch<React.SetStateAction<boolean>>
+  gameEnded: boolean
+  setGameEnded: React.Dispatch<React.SetStateAction<boolean>>
+  canvasBitmapAtEndOfGame: string
+  setCanvasBitmapAtEndOfGame: React.Dispatch<React.SetStateAction<string>>
+  playerToNumberOfFakeArtistVotes: PlayerToNumberOfFakeArtistVotes
+  setPlayerToNumberOfFakeArtistVotes: React.Dispatch<
+    React.SetStateAction<PlayerToNumberOfFakeArtistVotes>
+  >
+  fakeArtist: string
+  setFakeArtist: React.Dispatch<React.SetStateAction<string>>
 }
 
 const UserContext = createContext<UserContextValue | undefined>(undefined)
@@ -53,6 +63,10 @@ type UserProviderProps = {
 
 export type PlayerToConfirmedHexColorMap = {
   [player: string]: string
+}
+
+export type PlayerToNumberOfFakeArtistVotes = {
+  [player: string]: number
 }
 
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
@@ -80,6 +94,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [allPlayersConfirmedColor, setAllPlayersConfirmedColor] =
     useState(false)
   const [exittedTitleCard, setExittedTitleCard] = useState(false)
+  const [gameEnded, setGameEnded] = useState(false)
+  const [canvasBitmapAtEndOfGame, setCanvasBitmapAtEndOfGame] = useState("")
+  const [playerToNumberOfFakeArtistVotes, setPlayerToNumberOfFakeArtistVotes] =
+    useState<PlayerToNumberOfFakeArtistVotes>({})
+  const [fakeArtist, setFakeArtist] = useState("")
 
   return (
     <UserContext.Provider
@@ -114,6 +133,14 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         setAllPlayersConfirmedColor,
         exittedTitleCard,
         setExittedTitleCard,
+        gameEnded,
+        setGameEnded,
+        canvasBitmapAtEndOfGame,
+        setCanvasBitmapAtEndOfGame,
+        playerToNumberOfFakeArtistVotes,
+        setPlayerToNumberOfFakeArtistVotes,
+        fakeArtist,
+        setFakeArtist
       }}
     >
       {children}

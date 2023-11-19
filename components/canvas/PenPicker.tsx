@@ -5,6 +5,7 @@ import { PenChosenData } from "@/app/canvas/page"
 import { Box, Tooltip } from "@mui/material"
 import { useSearchParams } from "next/navigation"
 import React, { useEffect, useState } from "react"
+import { sendWebSocketMessage } from "./utils"
 
 const colors = [
   { penColor: "black", hex: "#000000" },
@@ -39,16 +40,6 @@ const PenPicker = ({
     useState<ColorPlayerMap>({})
 
   useEffect(() => updatePlayersSelectedColors(penChosen), [penChosen])
-
-  const sendWebSocketMessage = (socket: WebSocket | null, data: object) => {
-    if (!socket) return
-
-    if (socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify(data))
-    } else {
-      socket.addEventListener("open", () => socket.send(JSON.stringify(data)))
-    }
-  }
 
   const handleColorClick = (color: string) => {
     if (isColorUnavailable(color)) return
