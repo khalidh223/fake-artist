@@ -53,6 +53,10 @@ interface UserContextValue {
   >
   fakeArtist: string
   setFakeArtist: React.Dispatch<React.SetStateAction<string>>
+  playerToNumberOfTwoCoins: PlayerToNumberOfTwoCoins
+  setPlayerToNumberOfTwoCoins: React.Dispatch<
+    React.SetStateAction<PlayerToNumberOfTwoCoins>
+  >
 }
 
 const UserContext = createContext<UserContextValue | undefined>(undefined)
@@ -66,6 +70,10 @@ export type PlayerToConfirmedHexColorMap = {
 }
 
 export type PlayerToNumberOfFakeArtistVotes = {
+  [player: string]: number
+}
+
+export type PlayerToNumberOfTwoCoins = {
   [player: string]: number
 }
 
@@ -99,6 +107,8 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [playerToNumberOfFakeArtistVotes, setPlayerToNumberOfFakeArtistVotes] =
     useState<PlayerToNumberOfFakeArtistVotes>({})
   const [fakeArtist, setFakeArtist] = useState("")
+  const [playerToNumberOfTwoCoins, setPlayerToNumberOfTwoCoins] =
+    useState<PlayerToNumberOfTwoCoins>({})
 
   return (
     <UserContext.Provider
@@ -140,7 +150,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         playerToNumberOfFakeArtistVotes,
         setPlayerToNumberOfFakeArtistVotes,
         fakeArtist,
-        setFakeArtist
+        setFakeArtist,
+        playerToNumberOfTwoCoins,
+        setPlayerToNumberOfTwoCoins
       }}
     >
       {children}

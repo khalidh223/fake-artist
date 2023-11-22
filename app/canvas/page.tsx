@@ -2,17 +2,18 @@
 import Players from "@/components/canvas/Players"
 import Sketchpad from "@/components/canvas/Sketchpad"
 import Box from "@mui/material/Box"
-import { useEffect, useState } from "react"
+import { Dispatch, SetStateAction, useEffect, useState } from "react"
 import {
   PlayerToConfirmedHexColorMap,
   PlayerToNumberOfFakeArtistVotes,
+  PlayerToNumberOfTwoCoins,
   useUser,
 } from "../UserProvider"
 import { useSearchParams } from "next/navigation"
 import QuestionMasterDialog from "@/components/canvas/QuestionMasterDialog"
 import FakeArtistDialog from "@/components/canvas/FakeArtistDialog"
 import PlayerDialog from "@/components/canvas/PlayerDialog"
-import CombinedPickFakeArtistAndCanvasDisplay from "@/components/canvas/CombinedPickFakeArtistAndCanvasDisplay"
+import FakeArtistAndCanvasDialog from "@/components/canvas/FakeArtistAndCanvasDialog"
 import { sendWebSocketMessage } from "@/components/canvas/utils"
 
 const useGameCode = () => {
@@ -175,6 +176,25 @@ const useSendQuestionMaster = (
   }, [allPlayersHaveARole, canvasSocket, gameCode])
 }
 
+const useSetAllPlayersInitialPoints = (
+  players: string[] | null,
+  setPlayerToNumberOfTwoCoins: Dispatch<SetStateAction<PlayerToNumberOfTwoCoins>>
+) => {
+  useEffect(() => {
+    if (players != null) {
+      setPlayerToNumberOfTwoCoins((prevPlayers) => {
+        const updatedPlayers = { ...prevPlayers }
+        
+        for (const player of players) {
+          updatedPlayers[player] = 0
+        }
+        
+        return updatedPlayers
+      })
+    }
+  }, [players])
+}
+
 export default function Home() {
   const websocketURL = process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT
   if (!websocketURL) {
@@ -205,7 +225,8 @@ export default function Home() {
     canvasBitmapAtEndOfGame,
     playerToNumberOfFakeArtistVotes,
     setPlayerToNumberOfFakeArtistVotes,
-    setFakeArtist
+    setFakeArtist,
+    setPlayerToNumberOfTwoCoins
   } = useUser()
 
   const [role, setRole] = useState<
@@ -213,6 +234,8 @@ export default function Home() {
   >(null)
   const [allPlayersHaveARole, setAllPlayersHaveARole] = useState<boolean>(false)
   const [penChosen, setPenChosen] = useState<PenChosenData | null>(null)
+
+  useSetAllPlayersInitialPoints(players, setPlayerToNumberOfTwoCoins)
 
   useSendRoleToPlayer(canvasWebSocket, gameCode, connectionId)
 
@@ -281,7 +304,7 @@ export default function Home() {
         exittedTitleCard={exittedTitleCard}
       />
       {gameEnded ? (
-        <CombinedPickFakeArtistAndCanvasDisplay
+        <FakeArtistAndCanvasDialog
           canvasWebSocket={canvasWebSocket}
           imageDataUrl={canvasBitmapAtEndOfGame}
           gameCode={gameCode}

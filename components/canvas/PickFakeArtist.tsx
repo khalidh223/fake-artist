@@ -66,12 +66,18 @@ interface PickFakeArtistProps {
   canvasWebSocket: WebSocket | null
   gameCode: string
   playersWithoutQuestionMaster: string[] | undefined
+  evaluateFakeArtistStatus: () => void
+  fakeArtistLost: boolean
+  fakeArtistWon: boolean
 }
 
 const PickFakeArtist: React.FC<PickFakeArtistProps> = ({
   canvasWebSocket,
   gameCode,
   playersWithoutQuestionMaster,
+  evaluateFakeArtistStatus,
+  fakeArtistLost,
+  fakeArtistWon
 }) => {
   const {
     playerToConfirmedHexColor,
@@ -89,13 +95,15 @@ const PickFakeArtist: React.FC<PickFakeArtistProps> = ({
   const [countdownComplete, setCountdownComplete] = useState<boolean>(false)
   const [hoveredPlayer, setHoveredPlayer] = useState<string | null>(null)
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null)
-  const [revealFakeArtistLost, setRevealFakeArtistLost] =
-    useState<boolean>(false)
-  const [revealFakeArtistWon, setRevealFakeArtistWon] = useState<boolean>(false)
 
   useEffect(() => initializeCountdown(), [])
   useEffect(
-    () => evaluateFakeArtistStatus(),
+    () => {
+      if (fakeArtist != "") {
+        evaluateFakeArtistStatus()
+        setCountdownMessage("The fake artist is...")
+      }
+    },
     [fakeArtist, playerToNumberOfFakeArtistVotes]
   )
 
@@ -120,32 +128,6 @@ const PickFakeArtist: React.FC<PickFakeArtistProps> = ({
     }, initialDelay)
 
     return () => clearTimeout(timer)
-  }
-
-  const isVoteMax = (vote: number, sortedVotes: number[]) =>
-    vote === sortedVotes[0]
-  const isVoteTied = (sortedVotes: number[]) =>
-    sortedVotes[0] === sortedVotes[1]
-
-  const evaluateFakeArtistStatus = () => {
-    if (fakeArtist !== "") {
-      const sortedVotes = Object.values(playerToNumberOfFakeArtistVotes).sort(
-        (a, b) => b - a
-      )
-      const isLoser =
-        isVoteMax(playerToNumberOfFakeArtistVotes[fakeArtist], sortedVotes) &&
-        !isVoteTied(sortedVotes)
-      const isWinner =
-        !isVoteMax(playerToNumberOfFakeArtistVotes[fakeArtist], sortedVotes) ||
-        isVoteTied(sortedVotes)
-
-      setTimeout(() => {
-        setRevealFakeArtistLost(isLoser)
-        setRevealFakeArtistWon(isWinner)
-      }, 2000)
-
-      setCountdownMessage("The fake artist is...")
-    }
   }
 
   const sendVote = (player: string) => {
@@ -174,8 +156,8 @@ const PickFakeArtist: React.FC<PickFakeArtistProps> = ({
       onLeave={() => setHoveredPlayer(null)}
       onClick={() => isPlayerClickable(player) && sendVote(player)}
       isFakeArtist={player === fakeArtist}
-      isFakeArtistLost={revealFakeArtistLost}
-      isFakeArtistWon={revealFakeArtistWon}
+      fakeArtistLost={fakeArtistLost}
+      fakeArtistWon={fakeArtistWon}
       voteCount={playerToNumberOfFakeArtistVotes[player] ?? 0}
       isClickable={isPlayerClickable(player)}
       selectedStyle={

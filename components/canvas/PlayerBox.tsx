@@ -45,8 +45,8 @@ const NumberOfVotesText = ({ voteCount }: { voteCount: number }) => (
 interface PlayerProps {
   onClick: () => void
   isFakeArtist: boolean
-  isFakeArtistLost: boolean
-  isFakeArtistWon: boolean
+  fakeArtistLost: boolean
+  fakeArtistWon: boolean
   isClickable: boolean
   selectedStyle: string
   isQuestionMaster: boolean
@@ -56,8 +56,8 @@ const Player: React.FC<PlayerProps> = ({
   isClickable,
   isQuestionMaster,
   isFakeArtist,
-  isFakeArtistLost,
-  isFakeArtistWon,
+  fakeArtistLost,
+  fakeArtistWon,
   selectedStyle,
   onClick,
 }) => (
@@ -71,11 +71,11 @@ const Player: React.FC<PlayerProps> = ({
   >
     <FadeInFakeArtistLostImage
       isFakeArtist={isFakeArtist}
-      isFakeArtistLost={isFakeArtistLost}
+      fakeArtistLost={fakeArtistLost}
     />
     <FadeInFakeArtistWonImage
       isFakeArtist={isFakeArtist}
-      isFakeArtistWon={isFakeArtistWon}
+      fakeArtistWon={fakeArtistWon}
     />
     <PlayerImage
       selectedStyle={selectedStyle}
@@ -87,10 +87,10 @@ const Player: React.FC<PlayerProps> = ({
 
 const FadeInFakeArtistLostImage = ({
   isFakeArtist,
-  isFakeArtistLost,
+  fakeArtistLost,
 }: {
   isFakeArtist: boolean
-  isFakeArtistLost: boolean
+  fakeArtistLost: boolean
 }) => (
   <img
     src="/fake_artist_lost.png"
@@ -99,20 +99,20 @@ const FadeInFakeArtistLostImage = ({
       width: "100%",
       height: "100%",
       position: "absolute",
-      visibility: isFakeArtist && isFakeArtistLost ? "visible" : "hidden",
-      opacity: isFakeArtist && isFakeArtistLost ? 1 : 0,
+      visibility: isFakeArtist && fakeArtistLost ? "visible" : "hidden",
+      opacity: isFakeArtist && fakeArtistLost ? 1 : 0,
       transition:
-        isFakeArtist && isFakeArtistLost ? "opacity 2s ease-in-out" : "none",
+        isFakeArtist && fakeArtistLost ? "opacity 2s ease-in-out" : "none",
     }}
   />
 )
 
 const FadeInFakeArtistWonImage = ({
   isFakeArtist,
-  isFakeArtistWon,
+  fakeArtistWon,
 }: {
   isFakeArtist: boolean
-  isFakeArtistWon: boolean
+  fakeArtistWon: boolean
 }) => (
   <img
     src="/fake_artist_speaking.png"
@@ -121,10 +121,10 @@ const FadeInFakeArtistWonImage = ({
       width: "100%",
       height: "100%",
       position: "absolute",
-      visibility: isFakeArtist && isFakeArtistWon ? "visible" : "hidden",
-      opacity: isFakeArtist && isFakeArtistWon ? 1 : 0,
+      visibility: isFakeArtist && fakeArtistWon ? "visible" : "hidden",
+      opacity: isFakeArtist && fakeArtistWon ? 1 : 0,
       transition:
-        isFakeArtist && isFakeArtistWon ? "opacity 2s ease-in-out" : "none",
+        isFakeArtist && fakeArtistWon ? "opacity 2s ease-in-out" : "none",
     }}
   />
 )
@@ -164,8 +164,8 @@ interface PlayerBoxProps {
   onLeave: () => void
   onClick: () => void
   isFakeArtist: boolean
-  isFakeArtistLost: boolean
-  isFakeArtistWon: boolean
+  fakeArtistLost: boolean
+  fakeArtistWon: boolean
   voteCount: number
   isClickable: boolean
   selectedStyle: string
@@ -180,8 +180,8 @@ const PlayerBox: React.FC<PlayerBoxProps> = ({
   onLeave,
   onClick,
   isFakeArtist,
-  isFakeArtistLost,
-  isFakeArtistWon,
+  fakeArtistLost,
+  fakeArtistWon,
   voteCount,
   isClickable,
   selectedStyle,
@@ -196,16 +196,16 @@ const PlayerBox: React.FC<PlayerBoxProps> = ({
     onMouseEnter={() => !isQuestionMaster && onHover(player)}
     onMouseLeave={() => onLeave()}
   >
-    {isFakeArtist && isFakeArtistLost && <LoserSpeechBubble />}
-    {isFakeArtist && isFakeArtistWon && <WinnerSpeechBubble />}
+    {isFakeArtist && fakeArtistLost && <LoserSpeechBubble />}
+    {isFakeArtist && fakeArtistWon && <WinnerSpeechBubble />}
     <NumberOfVotesText voteCount={voteCount} />
     <Player
       isClickable={isClickable}
       isQuestionMaster={isQuestionMaster}
       isFakeArtist={isFakeArtist}
       onClick={onClick}
-      isFakeArtistLost={isFakeArtistLost}
-      isFakeArtistWon={isFakeArtistWon}
+      fakeArtistLost={fakeArtistLost}
+      fakeArtistWon={fakeArtistWon}
       selectedStyle={selectedStyle}
     />
     <PlayerName player={player} isYou={isYou} />

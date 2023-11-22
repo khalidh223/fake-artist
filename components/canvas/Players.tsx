@@ -1,7 +1,7 @@
 "use client"
 import React, { useEffect } from "react"
 import { Box, Skeleton, Typography } from "@mui/material"
-import { useUser } from "@/app/UserProvider"
+import { PlayerToNumberOfTwoCoins, useUser } from "@/app/UserProvider"
 
 const Players = ({
   socket,
@@ -12,7 +12,7 @@ const Players = ({
   gameCode: string
   questionMaster: string | null
 }) => {
-  const { players, currentPlayerDrawing } = useUser()
+  const { players, currentPlayerDrawing, playerToNumberOfTwoCoins } = useUser()
 
   useSetupWebSocket(gameCode, socket)
 
@@ -26,6 +26,7 @@ const Players = ({
           players={players.sort()}
           questionMaster={questionMaster}
           currentPlayerDrawing={currentPlayerDrawing}
+          playerToNumberOfTwoCoins={playerToNumberOfTwoCoins}
         />
       )}
     </StyledPlayersBox>
@@ -111,10 +112,12 @@ const PlayerList = ({
   players,
   questionMaster,
   currentPlayerDrawing,
+  playerToNumberOfTwoCoins,
 }: {
   players: string[]
   questionMaster: string | null
   currentPlayerDrawing: string
+  playerToNumberOfTwoCoins: PlayerToNumberOfTwoCoins
 }) => (
   <>
     {players.map((player, idx) => (
@@ -123,6 +126,7 @@ const PlayerList = ({
         player={player}
         questionMaster={questionMaster}
         underlinePlayer={player === currentPlayerDrawing}
+        numberOfTwoCoins={playerToNumberOfTwoCoins[player]}
       />
     ))}
   </>
@@ -132,10 +136,12 @@ const PlayerItem = ({
   player,
   questionMaster,
   underlinePlayer,
+  numberOfTwoCoins,
 }: {
   player: string
   questionMaster: string | null
   underlinePlayer: boolean
+  numberOfTwoCoins: number
 }) => (
   <Box
     display="flex"
@@ -148,15 +154,15 @@ const PlayerItem = ({
       <PlayerImage questionMaster={questionMaster} name={player} />
       <PlayerName name={player} underlinePlayer={underlinePlayer} />
     </Box>
-    <Coins />
+    <Coins numberOfTwoCoins={numberOfTwoCoins} />
   </Box>
 )
 
-const Coins = () => (
+const Coins = ({ numberOfTwoCoins }: { numberOfTwoCoins: number }) => (
   <Box display="flex" alignItems="center" marginLeft={"3rem"}>
     <CoinSection src="/one_coin.png" alt="one coin" count={0} />
     <Box marginLeft={1}>
-      <CoinSection src="/two_coin.png" alt="two coin" count={0} />
+      <CoinSection src="/two_coin.png" alt="two coin" count={numberOfTwoCoins} />
     </Box>
   </Box>
 )
