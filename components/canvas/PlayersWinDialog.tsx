@@ -4,14 +4,14 @@ import React from "react"
 const PlayersGrid = ({ players }: { players: string[] | undefined }) => (
   <>
     <Box display="flex" justifyContent="center" alignItems="center" gap={4}>
-      {players?.slice(0, 4).map((player) => (
-        <Player name={player} image="/player_large.png" />
+      {players?.slice(0, 4).map((player, index) => (
+        <Player key={index} name={player} image="/player_large.png" />
       ))}
     </Box>
     {players && players.length > 4 && (
       <Box display="flex" justifyContent="center" alignItems="center" gap={4}>
-        {players?.slice(4).map((player) => (
-          <Player name={player} image="/player_large.png" />
+        {players?.slice(4).map((player, index) => (
+          <Player key={index} name={player} image="/player_large.png" />
         ))}
       </Box>
     )}
