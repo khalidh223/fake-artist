@@ -6,6 +6,7 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react"
 import {
   PlayerToConfirmedHexColorMap,
   PlayerToNumberOfFakeArtistVotes,
+  PlayerToNumberOfOneCoins,
   PlayerToNumberOfTwoCoins,
   useUser,
 } from "../UserProvider"
@@ -178,17 +179,32 @@ const useSendQuestionMaster = (
 
 const useSetAllPlayersInitialPoints = (
   players: string[] | null,
-  setPlayerToNumberOfTwoCoins: Dispatch<SetStateAction<PlayerToNumberOfTwoCoins>>
+  setPlayerToNumberOfTwoCoins: Dispatch<
+    SetStateAction<PlayerToNumberOfTwoCoins>
+  >,
+  setPlayerToNumberOfOneCoins: Dispatch<
+    SetStateAction<PlayerToNumberOfOneCoins>
+  >
 ) => {
   useEffect(() => {
     if (players != null) {
       setPlayerToNumberOfTwoCoins((prevPlayers) => {
         const updatedPlayers = { ...prevPlayers }
-        
+
         for (const player of players) {
           updatedPlayers[player] = 0
         }
-        
+
+        return updatedPlayers
+      })
+
+      setPlayerToNumberOfOneCoins((prevPlayers) => {
+        const updatedPlayers = { ...prevPlayers }
+
+        for (const player of players) {
+          updatedPlayers[player] = 0
+        }
+
         return updatedPlayers
       })
     }
@@ -226,7 +242,8 @@ export default function Home() {
     playerToNumberOfFakeArtistVotes,
     setPlayerToNumberOfFakeArtistVotes,
     setFakeArtist,
-    setPlayerToNumberOfTwoCoins
+    setPlayerToNumberOfTwoCoins,
+    setPlayerToNumberOfOneCoins,
   } = useUser()
 
   const [role, setRole] = useState<
@@ -235,7 +252,11 @@ export default function Home() {
   const [allPlayersHaveARole, setAllPlayersHaveARole] = useState<boolean>(false)
   const [penChosen, setPenChosen] = useState<PenChosenData | null>(null)
 
-  useSetAllPlayersInitialPoints(players, setPlayerToNumberOfTwoCoins)
+  useSetAllPlayersInitialPoints(
+    players,
+    setPlayerToNumberOfTwoCoins,
+    setPlayerToNumberOfOneCoins
+  )
 
   useSendRoleToPlayer(canvasWebSocket, gameCode, connectionId)
 
