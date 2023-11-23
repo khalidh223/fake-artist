@@ -61,6 +61,16 @@ interface UserContextValue {
   setPlayerToNumberOfOneCoins: React.Dispatch<
     React.SetStateAction<PlayerToNumberOfOneCoins>
   >
+  fakeArtistGuessAndActualTitle: {
+    fakeArtistGuess: string
+    actualTitle: string
+  }
+  setFakeArtistGuessAndActualTitle: React.Dispatch<
+    React.SetStateAction<{
+      fakeArtistGuess: string
+      actualTitle: string
+    }>
+  >
 }
 
 const UserContext = createContext<UserContextValue | undefined>(undefined)
@@ -119,6 +129,8 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     useState<PlayerToNumberOfTwoCoins>({})
   const [playerToNumberOfOneCoins, setPlayerToNumberOfOneCoins] =
     useState<PlayerToNumberOfOneCoins>({})
+  const [fakeArtistGuessAndActualTitle, setFakeArtistGuessAndActualTitle] =
+    useState({fakeArtistGuess: "", actualTitle: ""})
 
   return (
     <UserContext.Provider
@@ -164,7 +176,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         playerToNumberOfTwoCoins,
         setPlayerToNumberOfTwoCoins,
         playerToNumberOfOneCoins,
-        setPlayerToNumberOfOneCoins
+        setPlayerToNumberOfOneCoins,
+        setFakeArtistGuessAndActualTitle,
+        fakeArtistGuessAndActualTitle,
       }}
     >
       {children}

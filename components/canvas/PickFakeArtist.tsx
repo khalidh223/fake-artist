@@ -69,6 +69,7 @@ interface PickFakeArtistProps {
   evaluateFakeArtistStatus: () => void
   fakeArtistLost: boolean
   fakeArtistWon: boolean
+  numberOfPlayersIsLargerThanMinimum: boolean
 }
 
 const PickFakeArtist: React.FC<PickFakeArtistProps> = ({
@@ -77,7 +78,8 @@ const PickFakeArtist: React.FC<PickFakeArtistProps> = ({
   playersWithoutQuestionMaster,
   evaluateFakeArtistStatus,
   fakeArtistLost,
-  fakeArtistWon
+  fakeArtistWon,
+  numberOfPlayersIsLargerThanMinimum
 }) => {
   const {
     playerToConfirmedHexColor,
@@ -97,15 +99,12 @@ const PickFakeArtist: React.FC<PickFakeArtistProps> = ({
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null)
 
   useEffect(() => initializeCountdown(), [])
-  useEffect(
-    () => {
-      if (fakeArtist != "") {
-        evaluateFakeArtistStatus()
-        setCountdownMessage("The fake artist is...")
-      }
-    },
-    [fakeArtist, playerToNumberOfFakeArtistVotes]
-  )
+  useEffect(() => {
+    if (fakeArtist != "") {
+      evaluateFakeArtistStatus()
+      setCountdownMessage("The fake artist is...")
+    }
+  }, [fakeArtist, playerToNumberOfFakeArtistVotes])
 
   const initializeCountdown = () => {
     const countdownParts = ["3,", "2,", "1,", "pick!"]
@@ -172,7 +171,14 @@ const PickFakeArtist: React.FC<PickFakeArtistProps> = ({
   )
 
   return (
-    <>
+    <Box
+      bgcolor="white"
+      borderRadius={2}
+      paddingLeft={4}
+      paddingRight={4}
+      width={numberOfPlayersIsLargerThanMinimum ? "48em" : "40em"}
+      height={numberOfPlayersIsLargerThanMinimum ? "35em" : "24em"}
+    >
       <DialogTitle>
         <DialogTitleBox
           questionMaster={questionMaster}
@@ -186,7 +192,7 @@ const PickFakeArtist: React.FC<PickFakeArtistProps> = ({
           renderPlayer={renderPlayer}
         />
       </DialogContent>
-    </>
+    </Box>
   )
 }
 
