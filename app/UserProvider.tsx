@@ -57,6 +57,10 @@ interface UserContextValue {
   setPlayerToNumberOfTwoCoins: React.Dispatch<
     React.SetStateAction<PlayerToNumberOfTwoCoins>
   >
+  playerToNumberOfOneCoins: PlayerToNumberOfOneCoins
+  setPlayerToNumberOfOneCoins: React.Dispatch<
+    React.SetStateAction<PlayerToNumberOfOneCoins>
+  >
 }
 
 const UserContext = createContext<UserContextValue | undefined>(undefined)
@@ -74,6 +78,10 @@ export type PlayerToNumberOfFakeArtistVotes = {
 }
 
 export type PlayerToNumberOfTwoCoins = {
+  [player: string]: number
+}
+
+export type PlayerToNumberOfOneCoins = {
   [player: string]: number
 }
 
@@ -109,6 +117,8 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [fakeArtist, setFakeArtist] = useState("")
   const [playerToNumberOfTwoCoins, setPlayerToNumberOfTwoCoins] =
     useState<PlayerToNumberOfTwoCoins>({})
+  const [playerToNumberOfOneCoins, setPlayerToNumberOfOneCoins] =
+    useState<PlayerToNumberOfOneCoins>({})
 
   return (
     <UserContext.Provider
@@ -152,7 +162,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         fakeArtist,
         setFakeArtist,
         playerToNumberOfTwoCoins,
-        setPlayerToNumberOfTwoCoins
+        setPlayerToNumberOfTwoCoins,
+        playerToNumberOfOneCoins,
+        setPlayerToNumberOfOneCoins
       }}
     >
       {children}

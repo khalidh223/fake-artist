@@ -1,7 +1,11 @@
 "use client"
 import React, { useEffect } from "react"
 import { Box, Skeleton, Typography } from "@mui/material"
-import { PlayerToNumberOfTwoCoins, useUser } from "@/app/UserProvider"
+import {
+  PlayerToNumberOfOneCoins,
+  PlayerToNumberOfTwoCoins,
+  useUser,
+} from "@/app/UserProvider"
 
 const Players = ({
   socket,
@@ -12,7 +16,12 @@ const Players = ({
   gameCode: string
   questionMaster: string | null
 }) => {
-  const { players, currentPlayerDrawing, playerToNumberOfTwoCoins } = useUser()
+  const {
+    players,
+    currentPlayerDrawing,
+    playerToNumberOfTwoCoins,
+    playerToNumberOfOneCoins,
+  } = useUser()
 
   useSetupWebSocket(gameCode, socket)
 
@@ -27,6 +36,7 @@ const Players = ({
           questionMaster={questionMaster}
           currentPlayerDrawing={currentPlayerDrawing}
           playerToNumberOfTwoCoins={playerToNumberOfTwoCoins}
+          playerToNumberOfOneCoins={playerToNumberOfOneCoins}
         />
       )}
     </StyledPlayersBox>
@@ -113,11 +123,13 @@ const PlayerList = ({
   questionMaster,
   currentPlayerDrawing,
   playerToNumberOfTwoCoins,
+  playerToNumberOfOneCoins
 }: {
   players: string[]
   questionMaster: string | null
   currentPlayerDrawing: string
   playerToNumberOfTwoCoins: PlayerToNumberOfTwoCoins
+  playerToNumberOfOneCoins: PlayerToNumberOfOneCoins
 }) => (
   <>
     {players.map((player, idx) => (
@@ -127,6 +139,7 @@ const PlayerList = ({
         questionMaster={questionMaster}
         underlinePlayer={player === currentPlayerDrawing}
         numberOfTwoCoins={playerToNumberOfTwoCoins[player]}
+        numberOfOneCoins={playerToNumberOfOneCoins[player]}
       />
     ))}
   </>
@@ -137,11 +150,13 @@ const PlayerItem = ({
   questionMaster,
   underlinePlayer,
   numberOfTwoCoins,
+  numberOfOneCoins,
 }: {
   player: string
   questionMaster: string | null
   underlinePlayer: boolean
   numberOfTwoCoins: number
+  numberOfOneCoins: number
 }) => (
   <Box
     display="flex"
@@ -154,15 +169,28 @@ const PlayerItem = ({
       <PlayerImage questionMaster={questionMaster} name={player} />
       <PlayerName name={player} underlinePlayer={underlinePlayer} />
     </Box>
-    <Coins numberOfTwoCoins={numberOfTwoCoins} />
+    <Coins
+      numberOfTwoCoins={numberOfTwoCoins}
+      numberOfOneCoins={numberOfOneCoins}
+    />
   </Box>
 )
 
-const Coins = ({ numberOfTwoCoins }: { numberOfTwoCoins: number }) => (
+const Coins = ({
+  numberOfTwoCoins,
+  numberOfOneCoins,
+}: {
+  numberOfTwoCoins: number
+  numberOfOneCoins: number
+}) => (
   <Box display="flex" alignItems="center" marginLeft={"3rem"}>
-    <CoinSection src="/one_coin.png" alt="one coin" count={0} />
+    <CoinSection src="/one_coin.png" alt="one coin" count={numberOfOneCoins} />
     <Box marginLeft={1}>
-      <CoinSection src="/two_coin.png" alt="two coin" count={numberOfTwoCoins} />
+      <CoinSection
+        src="/two_coin.png"
+        alt="two coin"
+        count={numberOfTwoCoins}
+      />
     </Box>
   </Box>
 )
