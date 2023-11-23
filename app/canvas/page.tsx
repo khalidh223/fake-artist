@@ -102,7 +102,13 @@ const useAddEventListenerToPlayerSocket = (
   setPlayerToNumberOfFakeArtistVotes: React.Dispatch<
     React.SetStateAction<PlayerToNumberOfFakeArtistVotes>
   >,
-  setFakeArtist: React.Dispatch<React.SetStateAction<string>>
+  setFakeArtist: React.Dispatch<React.SetStateAction<string>>,
+  setFakeArtistGuessAndActualTitle: Dispatch<
+    SetStateAction<{
+      fakeArtistGuess: string
+      actualTitle: string
+    }>
+  >
 ) => {
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -147,6 +153,11 @@ const useAddEventListenerToPlayerSocket = (
         })
       } else if (data.action === "setFakeArtist") {
         setFakeArtist(data.fakeArtist)
+      } else if (data.action === "setFakeArtistGuessAndActualTitle") {
+        setFakeArtistGuessAndActualTitle({
+          fakeArtistGuess: data.titleGuessedByFakeArtist,
+          actualTitle: data.actualTitle,
+        })
       }
     }
 
@@ -244,6 +255,7 @@ export default function Home() {
     setFakeArtist,
     setPlayerToNumberOfTwoCoins,
     setPlayerToNumberOfOneCoins,
+    setFakeArtistGuessAndActualTitle,
   } = useUser()
 
   const [role, setRole] = useState<
@@ -279,7 +291,8 @@ export default function Home() {
     setGameEnded,
     playerToNumberOfFakeArtistVotes,
     setPlayerToNumberOfFakeArtistVotes,
-    setFakeArtist
+    setFakeArtist,
+    setFakeArtistGuessAndActualTitle
   )
 
   useSendQuestionMaster(allPlayersHaveARole, gameCode, canvasWebSocket)

@@ -7,7 +7,7 @@ import CanvasImageDisplay from "./CanvasImageDisplay"
 import PickFakeArtist from "./PickFakeArtist"
 import { useUser } from "@/app/UserProvider"
 import QMAndFakeArtistWinDialog from "./QMAndFakeArtistWinDialog"
-import PlayersWinDialog from "./PlayersWinDialog"
+import FakeArtistCaught from "./FakeArtistCaught"
 
 interface SwitchFakeArtistDialogProps {
   isPickFakeArtistVisible: boolean
@@ -21,6 +21,7 @@ interface SwitchFakeArtistDialogProps {
   fakeArtist: string
   questionMaster: string
   playersWithoutQMAndFakeArtist: string[] | undefined
+  isFakeArtist: boolean
 }
 
 const SwitchFakeArtistDialog: React.FC<SwitchFakeArtistDialogProps> = ({
@@ -34,58 +35,37 @@ const SwitchFakeArtistDialog: React.FC<SwitchFakeArtistDialogProps> = ({
   fakeArtistWon,
   fakeArtist,
   questionMaster,
-  playersWithoutQMAndFakeArtist
+  playersWithoutQMAndFakeArtist,
+  isFakeArtist,
 }) => {
   if (isPickFakeArtistVisible) {
     return (
-      <Box
-        bgcolor="white"
-        borderRadius={2}
-        paddingLeft={4}
-        paddingRight={4}
-        width={numberOfPlayersIsLargerThanMinimum ? "48em" : "40em"}
-        height={numberOfPlayersIsLargerThanMinimum ? "35em" : "24em"}
-      >
-        <PickFakeArtist
-          canvasWebSocket={canvasWebSocket}
-          gameCode={gameCode}
-          playersWithoutQuestionMaster={playersWithoutQuestionMaster}
-          evaluateFakeArtistStatus={evaluateFakeArtistStatus}
-          fakeArtistLost={fakeArtistLost}
-          fakeArtistWon={fakeArtistWon}
-        />
-      </Box>
+      <PickFakeArtist
+        canvasWebSocket={canvasWebSocket}
+        gameCode={gameCode}
+        playersWithoutQuestionMaster={playersWithoutQuestionMaster}
+        evaluateFakeArtistStatus={evaluateFakeArtistStatus}
+        fakeArtistLost={fakeArtistLost}
+        fakeArtistWon={fakeArtistWon}
+        numberOfPlayersIsLargerThanMinimum={numberOfPlayersIsLargerThanMinimum}
+      />
     )
   } else if (!isPickFakeArtistVisible && fakeArtistWon) {
     return (
-      <Box
-        bgcolor="white"
-        borderRadius={2}
-        paddingLeft={4}
-        paddingRight={4}
-        width={"40em"}
-        height={"24em"}
-      >
-        <QMAndFakeArtistWinDialog
-          fakeArtist={fakeArtist}
-          questionMaster={questionMaster}
-        />
-      </Box>
+      <QMAndFakeArtistWinDialog
+        fakeArtist={fakeArtist}
+        questionMaster={questionMaster}
+      />
     )
   } else if (!isPickFakeArtistVisible && fakeArtistLost) {
     return (
-      <Box
-        bgcolor="white"
-        borderRadius={2}
-        paddingLeft={4}
-        paddingRight={4}
-        width={numberOfPlayersIsLargerThanMinimum ? "48em" : "40em"}
-        height={numberOfPlayersIsLargerThanMinimum ? "35em" : "24em"}
-      >
-        <PlayersWinDialog
-          playersWithoutQMAndFakeArtist={playersWithoutQMAndFakeArtist}
-        />
-      </Box>
+      <FakeArtistCaught
+        numberOfPlayersIsLargerThanMinimum={numberOfPlayersIsLargerThanMinimum}
+        playersWithoutQMAndFakeArtist={playersWithoutQMAndFakeArtist}
+        isFakeArtist={isFakeArtist}
+        canvasWebSocket={canvasWebSocket}
+        gameCode={gameCode}
+      />
     )
   }
   return <></>
@@ -106,7 +86,7 @@ const FakeArtistAndCanvasDialog = ({
     playerToNumberOfFakeArtistVotes,
     fakeArtist,
     setPlayerToNumberOfTwoCoins,
-    setPlayerToNumberOfOneCoins,
+    username,
   } = useUser()
 
   const [isPickFakeArtistVisible, setIsPickFakeArtistVisible] = useState(true)
@@ -132,24 +112,14 @@ const FakeArtistAndCanvasDialog = ({
     if (fakeArtistWon && questionMaster != null) {
       setPlayerToNumberOfTwoCoins((prevPoints) => {
         const updatedPoints = { ...prevPoints }
-        
+
         updatedPoints[fakeArtist] += 1
         updatedPoints[questionMaster] += 1
 
         return updatedPoints
       })
-    } else if (fakeArtistLost && playersWithoutQMAndFakeArtist != undefined) {
-      setPlayerToNumberOfOneCoins((prevPoints) => {
-        const updatedPoints = { ...prevPoints }
-
-        for (const player of playersWithoutQMAndFakeArtist) {
-          updatedPoints[player] += 1
-        }
-        
-        return updatedPoints
-      })
     }
-  }, [fakeArtistWon, fakeArtistLost])
+  }, [fakeArtistWon])
 
   const evaluateFakeArtistStatus = () => {
     const isVoteMax = (vote: number, sortedVotes: number[]) =>
@@ -202,6 +172,7 @@ const FakeArtistAndCanvasDialog = ({
           fakeArtist={fakeArtist}
           questionMaster={questionMaster != null ? questionMaster : ""}
           playersWithoutQMAndFakeArtist={playersWithoutQMAndFakeArtist}
+          isFakeArtist={username === fakeArtist}
         />
         <Box bgcolor="white" borderRadius={2}>
           <CanvasImageDisplay imageDataUrl={imageDataUrl} />

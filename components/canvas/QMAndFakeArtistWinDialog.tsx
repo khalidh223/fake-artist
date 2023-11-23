@@ -42,7 +42,14 @@ const QMAndFakeArtistWinDialog = ({
   questionMaster: string
 }) => {
   return (
-    <>
+    <Box
+      bgcolor="white"
+      borderRadius={2}
+      paddingLeft={4}
+      paddingRight={4}
+      width={"40em"}
+      height={"24em"}
+    >
       <DialogTitle>
         <DialogTitleBox />
       </DialogTitle>
@@ -52,7 +59,7 @@ const QMAndFakeArtistWinDialog = ({
           <Player name={questionMaster} image="/question_master.png" />
         </Box>
       </DialogContent>
-    </>
+    </Box>
   )
 }
 
