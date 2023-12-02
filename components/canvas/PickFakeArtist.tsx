@@ -7,7 +7,7 @@ import PlayerBox from "./PlayerBox"
 import { sendWebSocketMessage } from "./utils"
 
 interface DialogTitleBoxProps {
-  questionMaster: string | null
+  questionMaster: string
   username: string
   countdownMessage: string
 }

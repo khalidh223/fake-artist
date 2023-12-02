@@ -19,8 +19,8 @@ interface UserContextValue {
   setPlayers: React.Dispatch<React.SetStateAction<string[] | null>>
   currentPlayerDrawing: string
   setCurrentPlayerDrawing: React.Dispatch<React.SetStateAction<string>>
-  questionMaster: string | null
-  setQuestionMaster: React.Dispatch<React.SetStateAction<string | null>>
+  questionMaster: string
+  setQuestionMaster: React.Dispatch<React.SetStateAction<string>>
   canvasDimensions: {
     width: number
     height: number
@@ -71,6 +71,8 @@ interface UserContextValue {
       actualTitle: string
     }>
   >
+  setAllPlayersResettedRoundState: React.Dispatch<React.SetStateAction<boolean>>
+  allPlayersResettedRoundState: boolean
 }
 
 const UserContext = createContext<UserContextValue | undefined>(undefined)
@@ -108,7 +110,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     useState<string>("")
   const [players, setPlayers] = useState<string[] | null>(null)
   const [currentPlayerDrawing, setCurrentPlayerDrawing] = useState("")
-  const [questionMaster, setQuestionMaster] = useState<string | null>(null)
+  const [questionMaster, setQuestionMaster] = useState<string>("")
   const [canvasDimensions, setCanvasDimensions] = useState({
     width: 0,
     height: 0,
@@ -130,7 +132,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [playerToNumberOfOneCoins, setPlayerToNumberOfOneCoins] =
     useState<PlayerToNumberOfOneCoins>({})
   const [fakeArtistGuessAndActualTitle, setFakeArtistGuessAndActualTitle] =
-    useState({fakeArtistGuess: "", actualTitle: ""})
+    useState({ fakeArtistGuess: "", actualTitle: "" })
+  const [allPlayersResettedRoundState, setAllPlayersResettedRoundState] =
+    useState(false)
 
   return (
     <UserContext.Provider
@@ -179,6 +183,8 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         setPlayerToNumberOfOneCoins,
         setFakeArtistGuessAndActualTitle,
         fakeArtistGuessAndActualTitle,
+        setAllPlayersResettedRoundState,
+        allPlayersResettedRoundState
       }}
     >
       {children}

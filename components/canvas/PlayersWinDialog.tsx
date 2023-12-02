@@ -1,5 +1,18 @@
-import { Box, DialogContent, DialogTitle, Typography } from "@mui/material"
+import { useUser } from "@/app/UserProvider"
+import {
+  Box,
+  DialogContent,
+  DialogTitle,
+  Typography,
+  Button,
+} from "@mui/material"
+import { styled } from "@mui/system"
 import React from "react"
+
+const StyledButton = styled(Button)({
+  borderColor: "#F10A7E",
+  color: "#F10A7E",
+})
 
 const PlayersGrid = ({ players }: { players: string[] | undefined }) => (
   <>
@@ -53,8 +66,10 @@ const DialogTitleBox = () => (
 
 const PlayersWinDialog = ({
   playersWithoutQMAndFakeArtist,
+  handleExitDialog,
 }: {
   playersWithoutQMAndFakeArtist: string[] | undefined
+  handleExitDialog: () => void
 }) => {
   return (
     <>
@@ -62,7 +77,19 @@ const PlayersWinDialog = ({
         <DialogTitleBox />
       </DialogTitle>
       <DialogContent>
-        <PlayersGrid players={playersWithoutQMAndFakeArtist} />
+        <Box
+          display="flex"
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+        >
+          <PlayersGrid players={playersWithoutQMAndFakeArtist} />
+          <Box mt={"1em"}>
+            <StyledButton variant="outlined" onClick={handleExitDialog}>
+              Okay
+            </StyledButton>
+          </Box>
+        </Box>
       </DialogContent>
     </>
   )

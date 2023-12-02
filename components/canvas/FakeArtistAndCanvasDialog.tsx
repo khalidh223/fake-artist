@@ -8,6 +8,8 @@ import PickFakeArtist from "./PickFakeArtist"
 import { useUser } from "@/app/UserProvider"
 import QMAndFakeArtistWinDialog from "./QMAndFakeArtistWinDialog"
 import FakeArtistCaught from "./FakeArtistCaught"
+import { sendWebSocketMessage } from "./utils"
+import { Typography } from "@mui/material"
 
 interface SwitchFakeArtistDialogProps {
   isPickFakeArtistVisible: boolean
@@ -22,6 +24,7 @@ interface SwitchFakeArtistDialogProps {
   questionMaster: string
   playersWithoutQMAndFakeArtist: string[] | undefined
   isFakeArtist: boolean
+  handleExitDialog: () => void
 }
 
 const SwitchFakeArtistDialog: React.FC<SwitchFakeArtistDialogProps> = ({
@@ -37,6 +40,7 @@ const SwitchFakeArtistDialog: React.FC<SwitchFakeArtistDialogProps> = ({
   questionMaster,
   playersWithoutQMAndFakeArtist,
   isFakeArtist,
+  handleExitDialog,
 }) => {
   if (isPickFakeArtistVisible) {
     return (
@@ -55,6 +59,7 @@ const SwitchFakeArtistDialog: React.FC<SwitchFakeArtistDialogProps> = ({
       <QMAndFakeArtistWinDialog
         fakeArtist={fakeArtist}
         questionMaster={questionMaster}
+        handleExitDialog={handleExitDialog}
       />
     )
   } else if (!isPickFakeArtistVisible && fakeArtistLost) {
@@ -65,6 +70,7 @@ const SwitchFakeArtistDialog: React.FC<SwitchFakeArtistDialogProps> = ({
         isFakeArtist={isFakeArtist}
         canvasWebSocket={canvasWebSocket}
         gameCode={gameCode}
+        handleExitDialog={handleExitDialog}
       />
     )
   }
@@ -92,6 +98,7 @@ const FakeArtistAndCanvasDialog = ({
   const [isPickFakeArtistVisible, setIsPickFakeArtistVisible] = useState(true)
   const [fakeArtistLost, setFakeArtistLost] = useState<boolean>(false)
   const [fakeArtistWon, setFakeArtistWon] = useState<boolean>(false)
+  const [exittedDialog, setExittedDialog] = useState(false)
 
   const playersWithoutQuestionMaster = players?.filter(
     (player) => player != questionMaster
@@ -109,7 +116,7 @@ const FakeArtistAndCanvasDialog = ({
   }, [fakeArtistLost, fakeArtistWon])
 
   useEffect(() => {
-    if (fakeArtistWon && questionMaster != null) {
+    if (fakeArtistWon && questionMaster != "") {
       setPlayerToNumberOfTwoCoins((prevPoints) => {
         const updatedPoints = { ...prevPoints }
 
@@ -148,6 +155,26 @@ const FakeArtistAndCanvasDialog = ({
     playersWithoutQuestionMaster != undefined &&
     playersWithoutQuestionMaster.length > 4
 
+  const handleExitDialog = () => {
+    sendWebSocketMessage(canvasWebSocket, {
+      action: "resetRoundStateForPlayer",
+      gameCode,
+      username,
+      currentQuestionMaster: questionMaster,
+    })
+    setExittedDialog(true)
+  }
+
+  if (exittedDialog) {
+    return (
+      <Backdrop open={true} style={{ zIndex: 1300 }}>
+        <Typography variant="h5" fontWeight={"bold"}>
+          Waiting for new round to start...
+        </Typography>
+      </Backdrop>
+    )
+  }
+
   return (
     <Backdrop open={true} style={{ zIndex: 1300 }}>
       <Box
@@ -170,9 +197,10 @@ const FakeArtistAndCanvasDialog = ({
           fakeArtistLost={fakeArtistLost}
           fakeArtistWon={fakeArtistWon}
           fakeArtist={fakeArtist}
-          questionMaster={questionMaster != null ? questionMaster : ""}
+          questionMaster={questionMaster}
           playersWithoutQMAndFakeArtist={playersWithoutQMAndFakeArtist}
           isFakeArtist={username === fakeArtist}
+          handleExitDialog={handleExitDialog}
         />
         <Box bgcolor="white" borderRadius={2}>
           <CanvasImageDisplay imageDataUrl={imageDataUrl} />

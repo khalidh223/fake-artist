@@ -50,41 +50,22 @@ const useSendRoleToPlayer = (
   }, [canvasSocket, gameCode, connectionId])
 }
 
-const useAddEventListenerToCanvasWebSocket = (
-  canvasSocket: WebSocket | null,
-  setQuestionMaster: React.Dispatch<React.SetStateAction<string | null>>
-) => {
-  useEffect(() => {
-    const messageEventListener = (event: MessageEvent) => {
-      const data = JSON.parse(event.data)
-      if (data.action === "getUsernameOfQuestionMaster") {
-        setQuestionMaster(data.username)
-      }
-    }
-
-    if (canvasSocket) {
-      canvasSocket.addEventListener("message", messageEventListener)
-    }
-
-    return () => {
-      if (canvasSocket) {
-        canvasSocket.removeEventListener("message", messageEventListener)
-      }
-    }
-  }, [canvasSocket])
-}
-
 export type PenChosenData = {
   color: string
   username: string
 }
 
 const useAddEventListenerToPlayerSocket = (
+  resetLocalState: (
+    setRole: Dispatch<
+      SetStateAction<"FAKE_ARTIST" | "PLAYER" | "QUESTION_MASTER" | null>
+    >,
+    setPenChosen: Dispatch<SetStateAction<PenChosenData | null>>
+  ) => void,
   playerSocket: WebSocket | null,
   setRole: React.Dispatch<
     React.SetStateAction<"FAKE_ARTIST" | "PLAYER" | "QUESTION_MASTER" | null>
   >,
-  setAllPlayersHaveARole: React.Dispatch<React.SetStateAction<boolean>>,
   setPenChosen: React.Dispatch<React.SetStateAction<PenChosenData | null>>,
   setAllPlayersConfirmedColor: React.Dispatch<React.SetStateAction<boolean>>,
   setThemeChosenByQuestionMaster: React.Dispatch<React.SetStateAction<string>>,
@@ -95,7 +76,7 @@ const useAddEventListenerToPlayerSocket = (
   setCurrentPlayerDrawing: React.Dispatch<React.SetStateAction<string>>,
   players: string[] | null,
   setPlayers: React.Dispatch<React.SetStateAction<string[] | null>>,
-  questionMaster: string | null,
+  questionMaster: string,
   currentPlayerDrawing: string,
   setGameEnded: React.Dispatch<React.SetStateAction<boolean>>,
   playerToNumberOfFakeArtistVotes: PlayerToNumberOfFakeArtistVotes,
@@ -108,7 +89,10 @@ const useAddEventListenerToPlayerSocket = (
       fakeArtistGuess: string
       actualTitle: string
     }>
-  >
+  >,
+  setAllPlayersResettedRoundState: Dispatch<SetStateAction<boolean>>,
+  setQuestionMaster: Dispatch<SetStateAction<string>>,
+  allPlayersResettedRoundState: boolean
 ) => {
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -117,8 +101,6 @@ const useAddEventListenerToPlayerSocket = (
         setPlayers(data.players)
       } else if (data.action === "roleForPlayer") {
         setRole(data.role)
-      } else if (data.action === "allPlayersHaveARole") {
-        setAllPlayersHaveARole(true)
       } else if (data.action === "setColorChosen") {
         let penChosenData: PenChosenData = {
           color: data.colorChosen,
@@ -158,6 +140,11 @@ const useAddEventListenerToPlayerSocket = (
           fakeArtistGuess: data.titleGuessedByFakeArtist,
           actualTitle: data.actualTitle,
         })
+      } else if (data.action === "allPlayersResettedRoundState") {
+        resetLocalState(setRole, setPenChosen)
+        setAllPlayersResettedRoundState(true)
+      } else if (data.action === "getUsernameOfQuestionMaster") {
+        setQuestionMaster(data.username)
       }
     }
 
@@ -170,22 +157,13 @@ const useAddEventListenerToPlayerSocket = (
         playerSocket.removeEventListener("message", onMessage)
       }
     }
-  }, [playerSocket, players, questionMaster, currentPlayerDrawing])
-}
-
-const useSendQuestionMaster = (
-  allPlayersHaveARole: boolean,
-  gameCode: string,
-  canvasSocket: WebSocket | null
-) => {
-  useEffect(() => {
-    if (allPlayersHaveARole) {
-      sendWebSocketMessage(canvasSocket, {
-        action: "sendQuestionMaster",
-        gameCode,
-      })
-    }
-  }, [allPlayersHaveARole, canvasSocket, gameCode])
+  }, [
+    playerSocket,
+    players,
+    questionMaster,
+    currentPlayerDrawing,
+    allPlayersResettedRoundState,
+  ])
 }
 
 const useSetAllPlayersInitialPoints = (
@@ -256,13 +234,47 @@ export default function Home() {
     setPlayerToNumberOfTwoCoins,
     setPlayerToNumberOfOneCoins,
     setFakeArtistGuessAndActualTitle,
+    setAllPlayersResettedRoundState,
+    setHexCodeOfColorChosen,
+    setCloseSlidingImage,
+    setShowQMChip,
+    setExittedTitleCard,
+    setCanvasBitmapAtEndOfGame,
+    allPlayersResettedRoundState,
   } = useUser()
 
   const [role, setRole] = useState<
     "FAKE_ARTIST" | "PLAYER" | "QUESTION_MASTER" | null
   >(null)
-  const [allPlayersHaveARole, setAllPlayersHaveARole] = useState<boolean>(false)
   const [penChosen, setPenChosen] = useState<PenChosenData | null>(null)
+
+  const resetLocalState = (
+    setRole: Dispatch<
+      SetStateAction<"FAKE_ARTIST" | "PLAYER" | "QUESTION_MASTER" | null>
+    >,
+    setPenChosen: Dispatch<SetStateAction<PenChosenData | null>>
+  ) => {
+    setRole(null)
+    setHexCodeOfColorChosen(null)
+    setQuestionMaster("")
+    setCloseSlidingImage(false)
+    setShowQMChip(false)
+    setPenChosen(null)
+    setExittedTitleCard(false)
+    setCanvasBitmapAtEndOfGame("")
+    setPlayerToConfirmedHexColor({})
+    setAllPlayersConfirmedColor(false)
+    setThemeChosenByQuestionMaster("")
+    setTitleChosenByQuestionMaster("")
+    setCurrentPlayerDrawing("")
+    setGameEnded(false)
+    setPlayerToNumberOfFakeArtistVotes({})
+    setFakeArtist("")
+    setFakeArtistGuessAndActualTitle({
+      fakeArtistGuess: "",
+      actualTitle: "",
+    })
+  }
 
   useSetAllPlayersInitialPoints(
     players,
@@ -272,12 +284,10 @@ export default function Home() {
 
   useSendRoleToPlayer(canvasWebSocket, gameCode, connectionId)
 
-  useAddEventListenerToCanvasWebSocket(canvasWebSocket, setQuestionMaster)
-
   useAddEventListenerToPlayerSocket(
+    resetLocalState,
     playerSocket,
     setRole,
-    setAllPlayersHaveARole,
     setPenChosen,
     setAllPlayersConfirmedColor,
     setThemeChosenByQuestionMaster,
@@ -292,10 +302,17 @@ export default function Home() {
     playerToNumberOfFakeArtistVotes,
     setPlayerToNumberOfFakeArtistVotes,
     setFakeArtist,
-    setFakeArtistGuessAndActualTitle
+    setFakeArtistGuessAndActualTitle,
+    setAllPlayersResettedRoundState,
+    setQuestionMaster,
+    allPlayersResettedRoundState
   )
 
-  useSendQuestionMaster(allPlayersHaveARole, gameCode, canvasWebSocket)
+  useEffect(() => {
+    if (role != null) {
+      setAllPlayersResettedRoundState(false)
+    }
+  }, [role, allPlayersResettedRoundState])
 
   return (
     <Box
@@ -336,6 +353,7 @@ export default function Home() {
         title={titleChosenByQuestionMaster}
         theme={themeChosenByQuestionMaster}
         exittedTitleCard={exittedTitleCard}
+        allPlayersResettedRoundState={allPlayersResettedRoundState}
       />
       {gameEnded ? (
         <FakeArtistAndCanvasDialog

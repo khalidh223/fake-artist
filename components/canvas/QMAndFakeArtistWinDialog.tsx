@@ -1,5 +1,17 @@
-import { Box, DialogContent, DialogTitle, Typography } from "@mui/material"
 import React from "react"
+import {
+  Box,
+  DialogContent,
+  DialogTitle,
+  Typography,
+  Button,
+} from "@mui/material"
+import { styled } from "@mui/system"
+
+const StyledButton = styled(Button)({
+  borderColor: "#F10A7E",
+  color: "#F10A7E",
+})
 
 const PlayerName = ({ player }: { player: string }) => (
   <Typography variant="h6">{player}</Typography>
@@ -37,9 +49,11 @@ const DialogTitleBox = () => (
 const QMAndFakeArtistWinDialog = ({
   fakeArtist,
   questionMaster,
+  handleExitDialog,
 }: {
   fakeArtist: string
   questionMaster: string
+  handleExitDialog: () => void
 }) => {
   return (
     <Box
@@ -48,15 +62,32 @@ const QMAndFakeArtistWinDialog = ({
       paddingLeft={4}
       paddingRight={4}
       width={"40em"}
-      height={"24em"}
+      height={"28em"}
     >
       <DialogTitle>
         <DialogTitleBox />
       </DialogTitle>
       <DialogContent>
-        <Box display="flex" justifyContent="center" alignItems="center" gap={4}>
-          <Player name={fakeArtist} image="/fake_artist.png" />
-          <Player name={questionMaster} image="/question_master.png" />
+        <Box
+          display="flex"
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+        >
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            gap={4}
+          >
+            <Player name={fakeArtist} image="/fake_artist.png" />
+            <Player name={questionMaster} image="/question_master.png" />
+          </Box>
+          <Box mt={'1em'}>
+            <StyledButton variant="outlined" onClick={handleExitDialog}>
+              Okay
+            </StyledButton>
+          </Box>
         </Box>
       </DialogContent>
     </Box>
