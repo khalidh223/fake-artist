@@ -13,10 +13,12 @@ const DrawCanvas = ({
   canvasWebSocket,
   youAreCurrentlyDrawing,
   questionMaster,
+  allPlayersResettedRoundState,
 }: {
   canvasWebSocket: WebSocket | null
   youAreCurrentlyDrawing: boolean
-  questionMaster: string | null
+  questionMaster: string
+  allPlayersResettedRoundState: boolean
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const lastCoords = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
@@ -25,8 +27,15 @@ const DrawCanvas = ({
   const currentRoundRef = useRef(0)
   const drawingRef = useRef<boolean>(false)
   const gameCode = useGameCode()
-  const { hexCodeOfColorChosen, setCanvasDimensions, players, username, gameEnded, setCanvasBitmapAtEndOfGame } =
-    useUser()
+  const {
+    hexCodeOfColorChosen,
+    setCanvasDimensions,
+    players,
+    username,
+    gameEnded,
+    setCanvasBitmapAtEndOfGame,
+    setAllPlayersResettedRoundState
+  } = useUser()
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -55,8 +64,27 @@ const DrawCanvas = ({
         setCanvasBitmapAtEndOfGame(imageDataUrl)
       }
     }
-
   }, [gameEnded])
+
+  useEffect(() => {
+    if (allPlayersResettedRoundState) {
+      if (canvasRef.current) {
+        const context = canvasRef.current.getContext("2d")
+        context?.clearRect(
+          0,
+          0,
+          canvasRef.current.width,
+          canvasRef.current.height
+        )
+      }
+      lastCoords.current = { x: 0, y: 0 }
+      numberOfDrawingsRef.current = 0
+      currentRoundRef.current = 0
+      drawingRef.current = false
+      setColor("")
+      setAllPlayersResettedRoundState(false)
+    }
+  }, [allPlayersResettedRoundState])
 
   const drawCanvasSocket = useDrawSocket()
 
@@ -137,7 +165,7 @@ const setupCanvasListeners = (
   username: string,
   canvasWebSocket: WebSocket | null,
   youAreCurrentlyDrawing: boolean,
-  questionMaster: string | null
+  questionMaster: string
 ) => {
   const canvas = canvasRef.current
   if (!canvas) return

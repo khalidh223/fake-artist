@@ -14,6 +14,7 @@ interface FakeArtistCaughtProps {
   isFakeArtist: boolean
   canvasWebSocket: WebSocket | null
   gameCode: string
+  handleExitDialog: () => void
 }
 
 const FakeArtistCaught = ({
@@ -22,6 +23,7 @@ const FakeArtistCaught = ({
   isFakeArtist,
   canvasWebSocket,
   gameCode,
+  handleExitDialog
 }: FakeArtistCaughtProps) => {
   const {
     fakeArtistGuessAndActualTitle,
@@ -67,7 +69,7 @@ const FakeArtistCaught = ({
   }
 
   function updateCoinsForFakeArtistAndQM() {
-    if (questionMaster != null) {
+    if (questionMaster != "") {
       setPlayerToNumberOfTwoCoins((prevPoints) => ({
         ...prevPoints,
         [fakeArtist]: prevPoints[fakeArtist] + 1,
@@ -126,16 +128,18 @@ const FakeArtistCaught = ({
       paddingLeft={4}
       paddingRight={4}
       width={numberOfPlayersIsLargerThanMinimum ? "48em" : "40em"}
-      height={numberOfPlayersIsLargerThanMinimum ? "35em" : "24em"}
+      height={numberOfPlayersIsLargerThanMinimum ? "39em" : "28em"}
     >
       {canShowPlayersWinDialog ? (
         <PlayersWinDialog
           playersWithoutQMAndFakeArtist={playersWithoutQMAndFakeArtist}
+          handleExitDialog={handleExitDialog}
         />
       ) : (
         <QMAndFakeArtistWinDialog
           fakeArtist={fakeArtist}
-          questionMaster={questionMaster ?? ""}
+          questionMaster={questionMaster}
+          handleExitDialog={handleExitDialog}
         />
       )}
     </Box>

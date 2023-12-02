@@ -14,7 +14,7 @@ const Players = ({
 }: {
   socket: WebSocket | null
   gameCode: string
-  questionMaster: string | null
+  questionMaster: string
 }) => {
   const {
     players,
@@ -126,7 +126,7 @@ const PlayerList = ({
   playerToNumberOfOneCoins
 }: {
   players: string[]
-  questionMaster: string | null
+  questionMaster: string
   currentPlayerDrawing: string
   playerToNumberOfTwoCoins: PlayerToNumberOfTwoCoins
   playerToNumberOfOneCoins: PlayerToNumberOfOneCoins
@@ -153,7 +153,7 @@ const PlayerItem = ({
   numberOfOneCoins,
 }: {
   player: string
-  questionMaster: string | null
+  questionMaster: string
   underlinePlayer: boolean
   numberOfTwoCoins: number
   numberOfOneCoins: number
@@ -214,7 +214,7 @@ const PlayerImage = ({
   questionMaster,
   name,
 }: {
-  questionMaster: string | null
+  questionMaster: string
   name: string
 }) => {
   if (questionMaster == name) {

@@ -29,11 +29,13 @@ const Sketchpad = ({
   title,
   theme,
   exittedTitleCard,
+  allPlayersResettedRoundState,
 }: {
   canvasWebSocket: WebSocket | null
   title: string
   theme: string
   exittedTitleCard: boolean
+  allPlayersResettedRoundState: boolean
 }) => {
   return (
     <StyledSketchpadBox>
@@ -42,7 +44,10 @@ const Sketchpad = ({
         theme={theme}
         exittedTitleCard={exittedTitleCard}
       />
-      <ContentBox canvasWebSocket={canvasWebSocket} />
+      <ContentBox
+        canvasWebSocket={canvasWebSocket}
+        allPlayersResettedRoundState={allPlayersResettedRoundState}
+      />
     </StyledSketchpadBox>
   )
 }
@@ -107,8 +112,10 @@ const PositionedBox = styled(Box)({
 
 const ContentBox = ({
   canvasWebSocket,
+  allPlayersResettedRoundState,
 }: {
   canvasWebSocket: WebSocket | null
+  allPlayersResettedRoundState: boolean
 }) => {
   const {
     currentPlayerDrawing,
@@ -245,6 +252,7 @@ const ContentBox = ({
           canvasWebSocket={canvasWebSocket}
           youAreCurrentlyDrawing={youAreCurrentlyDrawing}
           questionMaster={questionMaster}
+          allPlayersResettedRoundState={allPlayersResettedRoundState}
         />
         <Box
           sx={
