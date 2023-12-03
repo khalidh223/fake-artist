@@ -28,12 +28,6 @@ export const DrawSocketProvider: React.FC<DrawSocketProviderProps> = ({ children
     })
   }, [])
 
-  useEffect(() => {
-    return () => {
-      socket.disconnect()
-    }
-  }, [])
-
   return (
     <DrawSocketContext.Provider value={socket}>{children}</DrawSocketContext.Provider>
   )

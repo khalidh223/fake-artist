@@ -5,11 +5,82 @@ import Backdrop from "@mui/material/Backdrop"
 import Box from "@mui/material/Box"
 import CanvasImageDisplay from "./CanvasImageDisplay"
 import PickFakeArtist from "./PickFakeArtist"
-import { useUser } from "@/app/UserProvider"
+import {
+  PlayerToNumberOfOneCoins,
+  PlayerToNumberOfTwoCoins,
+  useUser,
+} from "@/app/UserProvider"
 import QMAndFakeArtistWinDialog from "./QMAndFakeArtistWinDialog"
 import FakeArtistCaught from "./FakeArtistCaught"
 import { sendWebSocketMessage } from "./utils"
-import { Typography } from "@mui/material"
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Typography,
+} from "@mui/material"
+import { useDrawSocket } from "@/app/DrawSocketProvider"
+import { styled } from "@mui/system"
+import { useRouter } from "next/navigation"
+
+const StyledButton = styled(Button)({
+  borderColor: "#F10A7E",
+  color: "#F10A7E",
+})
+
+const WinnerDialog = ({
+  winner,
+  resetState,
+}: {
+  winner: string
+  resetState: () => void
+}) => {
+  const router = useRouter()
+  return (
+    <Dialog open={true} fullWidth>
+      <Box
+        display={"flex"}
+        flexDirection={"column"}
+        justifyContent={"center"}
+        alignItems={"center"}
+      >
+        <DialogTitle>Game Over! The winner is:</DialogTitle>
+        <DialogContent>
+          <img
+            src={"/player_large.png"}
+            alt="winner"
+            width={150}
+            height={227}
+          />
+          <Box
+            mt={"0.5em"}
+            display={"flex"}
+            flexDirection={"column"}
+            justifyContent={"center"}
+            alignItems={"center"}
+          >
+            <Typography variant="h5" fontWeight={"bold"}>
+              {winner}
+            </Typography>
+          </Box>
+          <Box mt={"1em"}>
+            <StyledButton
+              variant="outlined"
+              onClick={() => {
+                router.push("/")
+                router.refresh()
+                resetState()
+              }}
+            >
+              Return To Home
+            </StyledButton>
+          </Box>
+        </DialogContent>
+      </Box>
+    </Dialog>
+  )
+}
 
 interface SwitchFakeArtistDialogProps {
   isPickFakeArtistVisible: boolean
@@ -91,14 +162,73 @@ const FakeArtistAndCanvasDialog = ({
     questionMaster,
     playerToNumberOfFakeArtistVotes,
     fakeArtist,
-    setPlayerToNumberOfTwoCoins,
     username,
+    playerToNumberOfOneCoins,
+    playerToNumberOfTwoCoins,
+    playerSocket,
+    setPlayerSocket,
+    setUsername,
+    setConnectionId,
+    setCanvasDimensions,
+    setThemeChosenByQuestionMaster,
+    setTitleChosenByQuestionMaster,
+    setQuestionMaster,
+    setPlayerToConfirmedHexColor,
+    setCurrentPlayerDrawing,
+    setPlayers,
+    setAllPlayersConfirmedColor,
+    setGameEnded,
+    setPlayerToNumberOfFakeArtistVotes,
+    setFakeArtist,
+    setPlayerToNumberOfTwoCoins,
+    setPlayerToNumberOfOneCoins,
+    setFakeArtistGuessAndActualTitle,
+    setAllPlayersResettedRoundState,
+    setHexCodeOfColorChosen,
+    setCloseSlidingImage,
+    setShowQMChip,
+    setExittedTitleCard,
+    setCanvasBitmapAtEndOfGame,
   } = useUser()
+
+  const drawSocket = useDrawSocket()
 
   const [isPickFakeArtistVisible, setIsPickFakeArtistVisible] = useState(true)
   const [fakeArtistLost, setFakeArtistLost] = useState<boolean>(false)
   const [fakeArtistWon, setFakeArtistWon] = useState<boolean>(false)
   const [exittedDialog, setExittedDialog] = useState(false)
+  const [playerWithFiveOrMorePoints, setPlayerWithFiveOrMorePoints] = useState<
+    string | null
+  >(null)
+
+  const resetLocalStateAfterGame = () => {
+    setUsername("")
+    setPlayerSocket(null)
+    setConnectionId("")
+    setCanvasDimensions({ width: 0, height: 0 })
+    setPlayers(null)
+    setHexCodeOfColorChosen(null)
+    setQuestionMaster("")
+    setCloseSlidingImage(false)
+    setShowQMChip(false)
+    setExittedTitleCard(false)
+    setCanvasBitmapAtEndOfGame("")
+    setPlayerToConfirmedHexColor({})
+    setAllPlayersConfirmedColor(false)
+    setThemeChosenByQuestionMaster("")
+    setTitleChosenByQuestionMaster("")
+    setCurrentPlayerDrawing("")
+    setGameEnded(false)
+    setPlayerToNumberOfFakeArtistVotes({})
+    setFakeArtist("")
+    setFakeArtistGuessAndActualTitle({
+      fakeArtistGuess: "",
+      actualTitle: "",
+    })
+    setPlayerToNumberOfTwoCoins({})
+    setPlayerToNumberOfOneCoins({})
+    setAllPlayersResettedRoundState(false)
+  }
 
   const playersWithoutQuestionMaster = players?.filter(
     (player) => player != questionMaster
@@ -156,22 +286,81 @@ const FakeArtistAndCanvasDialog = ({
     playersWithoutQuestionMaster.length > 4
 
   const handleExitDialog = () => {
+    setExittedDialog(true)
+
+    const searchForPlayerWithFiveOrMorePoints = findPlayerWithFiveOrMorePoints(
+      playerToNumberOfOneCoins,
+      playerToNumberOfTwoCoins
+    )
+    if (searchForPlayerWithFiveOrMorePoints != null) {
+      setPlayerWithFiveOrMorePoints(searchForPlayerWithFiveOrMorePoints)
+      leaveGame()
+      disconnectSockets()
+      return
+    }
+
     sendWebSocketMessage(canvasWebSocket, {
       action: "resetRoundStateForPlayer",
       gameCode,
       username,
       currentQuestionMaster: questionMaster,
     })
-    setExittedDialog(true)
   }
 
-  if (exittedDialog) {
+  const findPlayerWithFiveOrMorePoints = (
+    playerToNumberOfOneCoins: PlayerToNumberOfOneCoins,
+    playerToNumberOfTwoCoins: PlayerToNumberOfTwoCoins
+  ): string | null => {
+    const allPlayers = Array.from(
+      new Set<string>([
+        ...Object.keys(playerToNumberOfOneCoins),
+        ...Object.keys(playerToNumberOfTwoCoins),
+      ])
+    )
+
+    for (const player of allPlayers) {
+      const numberOfOneCoins = playerToNumberOfOneCoins[player] || 0
+      const numberOfTwoCoins = playerToNumberOfTwoCoins[player] || 0
+      const totalPoints = numberOfOneCoins + 2 * numberOfTwoCoins
+
+      if (totalPoints >= 5) {
+        return player
+      }
+    }
+
+    return null
+  }
+
+  const leaveGame = () => {
+    sendWebSocketMessage(playerSocket, {
+      action: "leaveGame",
+      gameCode: gameCode,
+      username: username,
+    })
+  }
+
+  const disconnectSockets = () => {
+    playerSocket?.close()
+    canvasWebSocket?.close()
+    setPlayerSocket(null)
+  }
+
+  if (exittedDialog && !playerWithFiveOrMorePoints) {
     return (
       <Backdrop open={true} style={{ zIndex: 1300 }}>
-        <Typography variant="h5" fontWeight={"bold"}>
+        <Typography variant="h5" fontWeight={"bold"} color={"white"}>
           Waiting for new round to start...
         </Typography>
       </Backdrop>
+    )
+  }
+
+  if (exittedDialog && playerWithFiveOrMorePoints) {
+    return (
+      <WinnerDialog
+        winner={playerWithFiveOrMorePoints}
+        resetState={resetLocalStateAfterGame}
+      />
     )
   }
 

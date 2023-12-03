@@ -144,7 +144,6 @@ const setupSocketListeners = (
 
   return () => {
     drawCanvasSocket.off("drawingData")
-    drawCanvasSocket.disconnect()
   }
 }
 
