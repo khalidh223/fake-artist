@@ -3,16 +3,18 @@
 import {
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   IconButton,
   MobileStepper,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material"
 import CloseIcon from "@mui/icons-material/Close"
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, Dispatch, SetStateAction } from "react"
 import GameCodeInput from "./GameCodeInput"
 import { useRouter } from "next/navigation"
 import { useDrawSocket } from "../../app/DrawSocketProvider"
@@ -39,6 +41,48 @@ const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
   } = useUser()
   const [players, setPlayers] = useState<string[]>([])
   const [gameEnded, setGameEnded] = useState(false)
+  const [gameCodeInvalidError, setGameCodeInvalidError] = useState<
+    string | null
+  >(null)
+  const [usernameInUseError, setUsernameInUseError] = useState<string | null>(
+    null
+  )
+  const [isValidationCheckLoading, setIsValidationCheckLoading] =
+    useState(false)
+
+  const [debouncedUsername, setDebouncedUsername] = useState(username)
+
+  useEffect(() => {
+    if (!playerSocket) {
+      if (process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT == null) {
+        throw Error("Websocket URL was not defined in this environment")
+      }
+      const ws = new WebSocket(process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT)
+      setPlayerSocket(ws)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (username != "" || gameCode != "") {
+      setIsValidationCheckLoading(true)
+
+      const timer = setTimeout(() => {
+        setIsValidationCheckLoading(false)
+      }, 1000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [username, gameCode])
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedUsername(username)
+    }, 500) // 500 milliseconds delay
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [username])
 
   useEffect(
     () => handleDrawSocket(drawSocket, gameCode, router),
@@ -49,9 +93,60 @@ const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
       playerSocket,
       setPlayers,
       setGameEnded,
-      setConnectionId
+      setConnectionId,
+      setGameCodeInvalidError,
+      setUsernameInUseError
     )
   }, [playerSocket])
+
+  useEffect(() => {
+    if (gameCode.length < 6 && gameCodeInvalidError) {
+      setGameCodeInvalidError(null)
+    }
+
+    if (usernameInUseError) {
+      setUsernameInUseError(null)
+    }
+  }, [username, gameCode])
+
+  useEffect(() => {
+    if (gameCode.length === 6) {
+      checkGameCode(gameCode, playerSocket)
+    }
+
+    if (gameCode.length === 6 && debouncedUsername !== "") {
+      checkUsernameExistsForGame(gameCode, debouncedUsername, playerSocket)
+    }
+  }, [gameCode, debouncedUsername])
+
+  const checkGameCode = (gameCode: string, playerSocket: WebSocket | null) => {
+    if (!playerSocket) {
+      throw Error("No playerSocket saved when checking game code")
+    } else {
+      const data = {
+        action: "checkGameCode",
+        gameCode: gameCode,
+      }
+      playerSocket.send(JSON.stringify(data))
+    }
+  }
+
+  const checkUsernameExistsForGame = (
+    gameCode: string,
+    username: string,
+    playerSocket: WebSocket | null
+  ) => {
+    if (!playerSocket) {
+      throw Error("No playerSocket saved when checking username")
+    } else {
+      const data = {
+        action: "checkUsernameExistsForGame",
+        gameCode: gameCode,
+        username: username,
+      }
+      playerSocket.send(JSON.stringify(data))
+    }
+  }
 
   const handleJoinGame = () => {
     initiateWebSocket(
@@ -92,10 +187,11 @@ const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
           gameEnded={gameEnded}
           activeStep={activeStep}
           players={players}
-          gameCode={gameCode}
           setGameCode={setGameCode}
           username={username}
           setUsername={setUsername}
+          gameCodeInvalidError={gameCodeInvalidError}
+          usernameInUseError={usernameInUseError}
         />
       </DialogContent>
       <StepperActions
@@ -106,6 +202,9 @@ const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
         handleJoinGame={handleJoinGame}
         playerSocket={playerSocket}
         setPlayerSocket={setPlayerSocket}
+        usernameInUseError={usernameInUseError}
+        gameCodeInvalid={gameCodeInvalidError}
+        isValidationCheckLoading={isValidationCheckLoading}
       />
     </Dialog>
   )
@@ -135,7 +234,9 @@ const handlePlayerSocketMessages = (
   playerSocket: WebSocket | null,
   setPlayers: React.Dispatch<React.SetStateAction<string[]>>,
   setGameEnded: React.Dispatch<React.SetStateAction<boolean>>,
-  setConnectionId: React.Dispatch<React.SetStateAction<string>>
+  setConnectionId: React.Dispatch<React.SetStateAction<string>>,
+  setGameCodeInvalidError: React.Dispatch<React.SetStateAction<string | null>>,
+  setUsernameInUseError: React.Dispatch<React.SetStateAction<string | null>>
 ) => {
   const messageEventListener = (event: MessageEvent) => {
     const data = JSON.parse(event.data)
@@ -148,6 +249,14 @@ const handlePlayerSocketMessages = (
         break
       case "connectionEstablished":
         setConnectionId(data.connectionId)
+        break
+      case "gameCodeInvalid":
+        setGameCodeInvalidError("Game code is invalid, please try again.")
+        break
+      case "usernameInUse":
+        setUsernameInUseError(
+          "Username is in use for this game, please provide a different username."
+        )
         break
       default:
         console.error(`Unhandled message action: ${data.action}`)
@@ -178,14 +287,16 @@ const initiateWebSocket = (
     }
     const ws = new WebSocket(process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT)
     ws.onopen = () => {
-      const gameData = {
-        action: "joinGame",
-        gameCode: gameCode,
-        username: username,
-      }
-      ws.send(JSON.stringify(gameData))
-      if (drawSocket) {
-        drawSocket.emit("joinGame", gameCode)
+      if (gameCode.length === 6 && username != "") {
+        const gameData = {
+          action: "joinGame",
+          gameCode: gameCode,
+          username: username,
+        }
+        ws.send(JSON.stringify(gameData))
+        if (drawSocket) {
+          drawSocket.emit("joinGame", gameCode)
+        }
       }
     }
     setPlayerSocket(ws)
@@ -232,18 +343,37 @@ const CloseDialogButton: React.FC<{ onClose: () => void }> = ({ onClose }) => (
   </IconButton>
 )
 
-const DisplayContent: React.FC<any> = (props) => {
-  if (props.gameEnded) return <GameEndedContent />
-  if (props.activeStep === 0)
+const DisplayContent = ({
+  gameEnded,
+  activeStep,
+  players,
+  setGameCode,
+  username,
+  setUsername,
+  gameCodeInvalidError,
+  usernameInUseError,
+}: {
+  gameEnded: boolean
+  activeStep: number
+  players: string[]
+  setGameCode: Dispatch<SetStateAction<string>>
+  username: string
+  setUsername: Dispatch<SetStateAction<string>>
+  gameCodeInvalidError: string | null
+  usernameInUseError: string | null
+}) => {
+  if (gameEnded) return <GameEndedContent />
+  if (activeStep === 0)
     return (
       <EnterUsernameAndGameCodeInput
-        gameCode={props.gameCode}
-        setGameCode={props.setGameCode}
-        username={props.username}
-        setUsername={props.setUsername}
+        setGameCode={setGameCode}
+        username={username}
+        setUsername={setUsername}
+        gameCodeInvalidError={gameCodeInvalidError}
+        usernameInUseError={usernameInUseError}
       />
     )
-  return <JoiningContent players={props.players} />
+  return <JoiningContent players={players} />
 }
 
 const GameEndedContent: React.FC = () => (
@@ -257,11 +387,18 @@ const GameEndedContent: React.FC = () => (
   </Box>
 )
 
-const EnterUsernameAndGameCodeInput: React.FC<any> = ({
-  gameCode,
+const EnterUsernameAndGameCodeInput = ({
   setGameCode,
   username,
   setUsername,
+  gameCodeInvalidError,
+  usernameInUseError,
+}: {
+  setGameCode: Dispatch<SetStateAction<string>>
+  username: string
+  setUsername: Dispatch<SetStateAction<string>>
+  gameCodeInvalidError: string | null
+  usernameInUseError: string | null
 }) => {
   const inputProps = {
     style: {
@@ -274,6 +411,21 @@ const EnterUsernameAndGameCodeInput: React.FC<any> = ({
       },
     },
   }
+
+  const setError = (
+    gameCodeInvalidError: string | null,
+    usernameInUseError: string | null
+  ): string => {
+    if (gameCodeInvalidError != null) {
+      return gameCodeInvalidError
+    } else if (usernameInUseError != null) {
+      return usernameInUseError
+    } else {
+      return ""
+    }
+  }
+
+  const error = setError(gameCodeInvalidError, usernameInUseError)
 
   return (
     <Box
@@ -295,7 +447,12 @@ const EnterUsernameAndGameCodeInput: React.FC<any> = ({
       <Typography variant="h6" mt={4} mb={2}>
         Enter your game code!
       </Typography>
-      <GameCodeInput gameCode={gameCode} setGameCode={setGameCode} />
+      <GameCodeInput setGameCode={setGameCode} />
+      {error != "" && (
+        <Typography style={{ color: "white", textAlign: "center" }} mt={"1em"}>
+          {error}
+        </Typography>
+      )}
     </Box>
   )
 }
@@ -341,6 +498,9 @@ type StepperActionsProps = {
   handleJoinGame: () => void
   playerSocket: WebSocket | null
   setPlayerSocket: React.Dispatch<React.SetStateAction<WebSocket | null>>
+  usernameInUseError: string | null
+  gameCodeInvalid: string | null
+  isValidationCheckLoading: boolean
 }
 
 const StepperActions: React.FC<StepperActionsProps> = ({
@@ -351,6 +511,9 @@ const StepperActions: React.FC<StepperActionsProps> = ({
   handleJoinGame,
   playerSocket,
   setPlayerSocket,
+  usernameInUseError,
+  gameCodeInvalid,
+  isValidationCheckLoading,
 }) => (
   <DialogActions sx={{ flexDirection: "column", alignItems: "center" }}>
     <MobileStepper
@@ -382,19 +545,41 @@ const StepperActions: React.FC<StepperActionsProps> = ({
         </Button>
       }
       nextButton={
-        <Button
-          size="small"
-          onClick={() => {
-            if (activeStep === 0) {
-              handleJoinGame()
-            }
-            setActiveStep((prevStep) => prevStep + 1)
-          }}
-          sx={{ color: "#fff" }}
-          disabled={!username.trim() || !gameCode.trim()}
+        <Tooltip
+          title={isValidationCheckLoading ? "Verifying fields..." : ""}
+          arrow
         >
-          {activeStep === 0 ? "Join" : null}
-        </Button>
+          <span>
+            <Button
+              size="small"
+              onClick={() => {
+                if (activeStep === 0) {
+                  handleJoinGame()
+                }
+                setActiveStep((prevStep) => prevStep + 1)
+              }}
+              sx={{ color: "#fff", position: "relative" }}
+              disabled={
+                isValidationCheckLoading ||
+                !username.trim() ||
+                !gameCode.trim() ||
+                gameCode.length !== 6 ||
+                username.length === 0 ||
+                usernameInUseError != null ||
+                gameCodeInvalid != null
+              }
+            >
+              {isValidationCheckLoading ? (
+                <CircularProgress
+                  size={24}
+                  sx={{ position: "absolute", color: "white" }}
+                />
+              ) : (
+                activeStep === 0 && "Join"
+              )}
+            </Button>
+          </span>
+        </Tooltip>
       }
     />
   </DialogActions>

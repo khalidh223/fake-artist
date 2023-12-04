@@ -67,25 +67,33 @@ const StartNewGameStepper = ({
   }, [gameCode, drawSocket])
 
   useEffect(() => {
-    if (gameCode && gameCode.trim() !== "" && !playerSocket) {
-      if (process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT == null) {
-        throw "When starting a new game, found that websocket URL was not defined in this environment"
+    if (gameCode && gameCode.trim() !== "") {
+      const gameData = {
+        action: "createGame",
+        gameCode: gameCode,
+        username: username,
       }
-      const ws = new WebSocket(process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT)
 
-      ws.onopen = () => {
-        const gameData = {
-          action: "createGame",
-          gameCode: gameCode,
-          username: username,
+      if (!playerSocket) {
+        if (process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT == null) {
+          throw "When starting a new game, found that websocket URL was not defined in this environment"
         }
-        ws.send(JSON.stringify(gameData))
+        const ws = new WebSocket(process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT)
+
+        ws.onopen = () => {
+          ws.send(JSON.stringify(gameData))
+          if (!players.includes(username)) {
+            setPlayers((prevPlayers) => [...prevPlayers, username])
+          }
+        }
+
+        setPlayerSocket(ws)
+      } else {
+        playerSocket.send(JSON.stringify(gameData))
         if (!players.includes(username)) {
           setPlayers((prevPlayers) => [...prevPlayers, username])
         }
       }
-
-      setPlayerSocket(ws)
     }
   }, [gameCode])
 
