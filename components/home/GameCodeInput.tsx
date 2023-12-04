@@ -25,14 +25,10 @@ const StyledTextField = styled(TextField)({
 })
 
 interface GameCodeInputProps {
-  gameCode: string
   setGameCode: (value: string) => void
 }
 
-const GameCodeInput: React.FC<GameCodeInputProps> = ({
-  gameCode,
-  setGameCode,
-}) => {
+const GameCodeInput: React.FC<GameCodeInputProps> = ({ setGameCode }) => {
   const [values, setValues] = useState(Array(6).fill(""))
   const [focusIndex, setFocusIndex] = useState<number | null>(null)
   const focusRef = useRef<HTMLInputElement | null>(null)
@@ -74,23 +70,37 @@ const GameCodeInput: React.FC<GameCodeInputProps> = ({
     }
   }
 
+  const handlePaste = (event: React.ClipboardEvent) => {
+    event.preventDefault()
+    const text = event.clipboardData.getData("text").toUpperCase()
+    const regex = /^[A-Z0-9]{1,6}$/
+
+    if (regex.test(text)) {
+      const newValues = text.split("").slice(0, 6)
+      setValues([...newValues, ...Array(6 - newValues.length).fill("")])
+      setFocusIndex(newValues.length < 6 ? newValues.length : null)
+    }
+  }
+
   return (
-    <Box display="flex" justifyContent="center" gap={1}>
-      {values.map((value, index) => (
-        <StyledTextField
-          key={index}
-          variant="outlined"
-          color="primary"
-          value={value}
-          inputProps={{
-            maxLength: 1,
-          }}
-          inputRef={index === focusIndex ? focusRef : null}
-          onChange={handleInputChange(index)}
-          onKeyDown={handleKeyDown(index)}
-        />
-      ))}
-    </Box>
+    <>
+      <Box display="flex" justifyContent="center" gap={1} onPaste={handlePaste}>
+        {values.map((value, index) => (
+          <StyledTextField
+            key={index}
+            variant="outlined"
+            color="primary"
+            value={value}
+            inputProps={{
+              maxLength: 1,
+            }}
+            inputRef={index === focusIndex ? focusRef : null}
+            onChange={handleInputChange(index)}
+            onKeyDown={handleKeyDown(index)}
+          />
+        ))}
+      </Box>
+    </>
   )
 }
 
