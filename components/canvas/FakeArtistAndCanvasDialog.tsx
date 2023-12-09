@@ -36,6 +36,7 @@ const WinnerDialog = ({
   winner: string
   resetState: () => void
 }) => {
+  const { setRole } = useUser()
   const router = useRouter()
   return (
     <Dialog open={true} fullWidth>
@@ -68,8 +69,8 @@ const WinnerDialog = ({
             <StyledButton
               variant="outlined"
               onClick={() => {
+                setRole(null)
                 router.push("/")
-                router.refresh()
                 resetState()
               }}
             >

@@ -73,6 +73,8 @@ interface UserContextValue {
   >
   setAllPlayersResettedRoundState: React.Dispatch<React.SetStateAction<boolean>>
   allPlayersResettedRoundState: boolean
+  setRole: React.Dispatch<React.SetStateAction<"FAKE_ARTIST" | "PLAYER" | "QUESTION_MASTER" | null>>
+  role: "FAKE_ARTIST" | "PLAYER" | "QUESTION_MASTER" | null
 }
 
 const UserContext = createContext<UserContextValue | undefined>(undefined)
@@ -135,6 +137,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     useState({ fakeArtistGuess: "", actualTitle: "" })
   const [allPlayersResettedRoundState, setAllPlayersResettedRoundState] =
     useState(false)
+    const [role, setRole] = useState<
+    "FAKE_ARTIST" | "PLAYER" | "QUESTION_MASTER" | null
+  >(null)
 
   return (
     <UserContext.Provider
@@ -184,7 +189,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         setFakeArtistGuessAndActualTitle,
         fakeArtistGuessAndActualTitle,
         setAllPlayersResettedRoundState,
-        allPlayersResettedRoundState
+        allPlayersResettedRoundState,
+        setRole,
+        role
       }}
     >
       {children}
