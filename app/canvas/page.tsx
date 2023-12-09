@@ -16,6 +16,8 @@ import FakeArtistDialog from "@/components/canvas/FakeArtistDialog"
 import PlayerDialog from "@/components/canvas/PlayerDialog"
 import FakeArtistAndCanvasDialog from "@/components/canvas/FakeArtistAndCanvasDialog"
 import { sendWebSocketMessage } from "@/components/canvas/utils"
+import { motion } from "framer-motion"
+import LoadingNewGame from "@/components/canvas/LoadingNewGame"
 
 const useGameCode = () => {
   const params = useSearchParams()
@@ -173,9 +175,21 @@ const useSetAllPlayersInitialPoints = (
   >,
   setPlayerToNumberOfOneCoins: Dispatch<
     SetStateAction<PlayerToNumberOfOneCoins>
-  >
+  >,
+  playerToNumberOfOneCoins: PlayerToNumberOfOneCoins,
+  playerToNumberOfTwoCoins: PlayerToNumberOfTwoCoins
 ) => {
   useEffect(() => {
+    if (
+      players != null &&
+      (Object.values(playerToNumberOfOneCoins).some((value) => value === 1) ||
+        Object.values(playerToNumberOfTwoCoins).some((value) => value === 1))
+    ) {
+      setPlayerToNumberOfOneCoins(playerToNumberOfOneCoins)
+      setPlayerToNumberOfTwoCoins(playerToNumberOfTwoCoins)
+      return
+    }
+
     if (players != null) {
       setPlayerToNumberOfTwoCoins((prevPlayers) => {
         const updatedPlayers = { ...prevPlayers }
@@ -241,11 +255,26 @@ export default function Home() {
     setExittedTitleCard,
     setCanvasBitmapAtEndOfGame,
     allPlayersResettedRoundState,
+    setRole,
+    role,
+    playerToNumberOfOneCoins,
+    playerToNumberOfTwoCoins,
   } = useUser()
 
-  const [role, setRole] = useState<
-    "FAKE_ARTIST" | "PLAYER" | "QUESTION_MASTER" | null
-  >(null)
+  const pageVariants = role
+    ? {
+        initial: { opacity: 0, transition: { duration: 0.5 } },
+        animate: { opacity: 1, transition: { duration: 0.5 } },
+        exit: { opacity: 0, transition: { duration: 0.5 } },
+      }
+    : {
+        initial: {},
+        animate: {},
+        exit: {},
+      }
+
+  const pageTransition = { duration: 0.5 }
+
   const [penChosen, setPenChosen] = useState<PenChosenData | null>(null)
 
   const resetLocalState = (
@@ -279,7 +308,9 @@ export default function Home() {
   useSetAllPlayersInitialPoints(
     players,
     setPlayerToNumberOfTwoCoins,
-    setPlayerToNumberOfOneCoins
+    setPlayerToNumberOfOneCoins,
+    playerToNumberOfOneCoins,
+    playerToNumberOfTwoCoins
   )
 
   useSendRoleToPlayer(canvasWebSocket, gameCode, connectionId)
@@ -314,54 +345,66 @@ export default function Home() {
     }
   }, [role, allPlayersResettedRoundState])
 
+  if (!role) {
+    return <LoadingNewGame />
+  }
+
   return (
-    <Box
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      height="100vh"
+    <motion.div
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={pageTransition}
     >
-      {role === "QUESTION_MASTER" ? (
-        <QuestionMasterDialog
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        height="100vh"
+      >
+        {role === "QUESTION_MASTER" ? (
+          <QuestionMasterDialog
+            gameCode={gameCode}
+            allPlayersConfirmedColor={allPlayersConfirmedColor}
+          />
+        ) : null}
+        {role === "FAKE_ARTIST" ? (
+          <FakeArtistDialog
+            penChosen={penChosen}
+            canvasWebSocket={canvasWebSocket}
+            gameCode={gameCode}
+            allPlayersConfirmedColor={allPlayersConfirmedColor}
+          />
+        ) : null}
+        {role === "PLAYER" ? (
+          <PlayerDialog
+            penChosen={penChosen}
+            canvasWebSocket={canvasWebSocket}
+            gameCode={gameCode}
+            allPlayersConfirmedColor={allPlayersConfirmedColor}
+          />
+        ) : null}
+        <Players
+          socket={playerSocket}
           gameCode={gameCode}
-          allPlayersConfirmedColor={allPlayersConfirmedColor}
+          questionMaster={questionMaster}
         />
-      ) : null}
-      {role === "FAKE_ARTIST" ? (
-        <FakeArtistDialog
-          penChosen={penChosen}
+        <Sketchpad
           canvasWebSocket={canvasWebSocket}
-          gameCode={gameCode}
-          allPlayersConfirmedColor={allPlayersConfirmedColor}
+          title={titleChosenByQuestionMaster}
+          theme={themeChosenByQuestionMaster}
+          exittedTitleCard={exittedTitleCard}
+          allPlayersResettedRoundState={allPlayersResettedRoundState}
         />
-      ) : null}
-      {role === "PLAYER" ? (
-        <PlayerDialog
-          penChosen={penChosen}
-          canvasWebSocket={canvasWebSocket}
-          gameCode={gameCode}
-          allPlayersConfirmedColor={allPlayersConfirmedColor}
-        />
-      ) : null}
-      <Players
-        socket={playerSocket}
-        gameCode={gameCode}
-        questionMaster={questionMaster}
-      />
-      <Sketchpad
-        canvasWebSocket={canvasWebSocket}
-        title={titleChosenByQuestionMaster}
-        theme={themeChosenByQuestionMaster}
-        exittedTitleCard={exittedTitleCard}
-        allPlayersResettedRoundState={allPlayersResettedRoundState}
-      />
-      {gameEnded ? (
-        <FakeArtistAndCanvasDialog
-          canvasWebSocket={canvasWebSocket}
-          imageDataUrl={canvasBitmapAtEndOfGame}
-          gameCode={gameCode}
-        />
-      ) : null}
-    </Box>
+        {gameEnded ? (
+          <FakeArtistAndCanvasDialog
+            canvasWebSocket={canvasWebSocket}
+            imageDataUrl={canvasBitmapAtEndOfGame}
+            gameCode={gameCode}
+          />
+        ) : null}
+      </Box>
+    </motion.div>
   )
 }
