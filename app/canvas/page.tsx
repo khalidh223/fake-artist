@@ -18,6 +18,7 @@ import FakeArtistAndCanvasDialog from "@/components/canvas/FakeArtistAndCanvasDi
 import { sendWebSocketMessage } from "@/components/canvas/utils"
 import { motion } from "framer-motion"
 import LoadingNewGame from "@/components/canvas/LoadingNewGame"
+import NoGameCodeErrorPage from "@/components/canvas/NoGameCodeErrorPage"
 
 const useGameCode = () => {
   const params = useSearchParams()
@@ -344,6 +345,10 @@ export default function Home() {
       setAllPlayersResettedRoundState(false)
     }
   }, [role, allPlayersResettedRoundState])
+
+  if (gameCode === "") {
+    return <NoGameCodeErrorPage />
+  }
 
   if (!role) {
     return <LoadingNewGame />
