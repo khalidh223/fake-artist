@@ -135,6 +135,12 @@ const StartNewGameStepper = ({
 
     drawSocket.emit("joinGame", gameCode)
     drawSocket.emit("startGame", gameCode)
+
+    sendWebSocketMessage(playerSocket, {
+      action: "updateGameInProgressStatus",
+      gameCode,
+      isInProgress: true
+    })
   }
 
   const shouldFetchGameCode = () => activeStep === 1 && !hasFetchedGameCode
