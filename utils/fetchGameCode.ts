@@ -1,7 +1,7 @@
 import { SetStateAction } from "react"
 
 export default async function fetchGameCode(
-  setGameCode: (value: SetStateAction<string | null>) => void,
+  setGameCode: (value: SetStateAction<string>) => void,
   setHasFetchedGameCode: (value: SetStateAction<boolean>) => void,
   setLoading: (value: SetStateAction<boolean>) => void,
   username: string
@@ -31,7 +31,7 @@ export default async function fetchGameCode(
       throw new Error("Failed to fetch game code")
     }
     const data = await response.json()
-    setGameCode(data.gameCode)
+    setGameCode(data.gameCode ?? "")
     setHasFetchedGameCode(true)
     setLoading(false)
     return data.gameCode

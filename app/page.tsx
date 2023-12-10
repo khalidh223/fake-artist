@@ -5,9 +5,11 @@ import HomeButtons from "@/components/home/HomeButtons"
 import { useUser } from "./UserProvider"
 import { useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { sendWebSocketMessage } from "@/components/canvas/utils"
+import { useSearchParams } from "next/navigation"
 
 export default function Home() {
-  const { playerSocket, setPlayerSocket, role } = useUser()
+  const { playerSocket, setPlayerSocket, role, username, gameCode } = useUser()
 
   useEffect(() => {
     if (!playerSocket) {
@@ -18,6 +20,26 @@ export default function Home() {
       setPlayerSocket(ws)
     }
   }, [])
+
+  const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    e.returnValue = "" // Required for some browsers
+    if (gameCode != "" && username != "") {
+      sendWebSocketMessage(playerSocket, {
+        action: "leaveGame",
+        gameCode: gameCode,
+        username: username,
+      })
+    }
+    playerSocket?.close()
+  }
+
+  useEffect(() => {
+    window.addEventListener("beforeunload", handleBeforeUnload)
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+    }
+  }, [gameCode, username])
 
   const pageVariants = {
     initial: { opacity: 0, transition: { duration: 0.5 } },

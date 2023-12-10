@@ -21,6 +21,7 @@ import { useDrawSocket } from "../../app/DrawSocketProvider"
 import { Socket } from "socket.io-client"
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context"
 import { useUser } from "@/app/UserProvider"
+import { sendWebSocketMessage } from "../canvas/utils"
 
 const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
   open,
@@ -31,13 +32,14 @@ const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
   const drawSocket = useDrawSocket()
 
   const [activeStep, setActiveStep] = useState(0)
-  const [gameCode, setGameCode] = useState("")
   const {
     username,
     setUsername,
     playerSocket,
     setPlayerSocket,
     setConnectionId,
+    gameCode,
+    setGameCode
   } = useUser()
   const [players, setPlayers] = useState<string[]>([])
   const [gameEnded, setGameEnded] = useState(false)
@@ -159,16 +161,13 @@ const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
   }
 
   const sendLeaveGameMessage = () => {
-    if (playerSocket) {
-      const leaveGameData = {
-        action: "leaveGame",
-        gameCode: gameCode,
-        username: username,
-      }
-      playerSocket.send(JSON.stringify(leaveGameData))
-      playerSocket.close()
-      setPlayerSocket(null)
-    }
+    sendWebSocketMessage(playerSocket, {
+      action: "leaveGame",
+      gameCode: gameCode,
+      username: username,
+    })
+    playerSocket?.close()
+    setPlayerSocket(null)
   }
 
   const handleCloseDialog = () => {
@@ -246,6 +245,11 @@ const handlePlayerSocketMessages = (
         break
       case "gameEnded":
         setGameEnded(true)
+        break
+      case "gameLeft":
+        setPlayers((prevPlayers) =>
+          prevPlayers.filter((p) => p !== data.username)
+        )
         break
       case "connectionEstablished":
         setConnectionId(data.connectionId)

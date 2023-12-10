@@ -32,12 +32,21 @@ const StyledButton = styled(Button)({
 const WinnerDialog = ({
   winner,
   resetState,
+  canvasWebSocket
 }: {
   winner: string
   resetState: () => void
+  canvasWebSocket: WebSocket | null
 }) => {
-  const { setRole } = useUser()
+  const { setRole, playerSocket, setPlayerSocket } = useUser()
   const router = useRouter()
+
+  const disconnectSockets = () => {
+    playerSocket?.close()
+    canvasWebSocket?.close()
+    setPlayerSocket(null)
+  }
+
   return (
     <Dialog open={true} fullWidth>
       <Box
@@ -70,6 +79,7 @@ const WinnerDialog = ({
               variant="outlined"
               onClick={() => {
                 setRole(null)
+                disconnectSockets()
                 router.push("/")
                 resetState()
               }}
@@ -166,7 +176,6 @@ const FakeArtistAndCanvasDialog = ({
     username,
     playerToNumberOfOneCoins,
     playerToNumberOfTwoCoins,
-    playerSocket,
     setPlayerSocket,
     setUsername,
     setConnectionId,
@@ -191,8 +200,6 @@ const FakeArtistAndCanvasDialog = ({
     setExittedTitleCard,
     setCanvasBitmapAtEndOfGame,
   } = useUser()
-
-  const drawSocket = useDrawSocket()
 
   const [isPickFakeArtistVisible, setIsPickFakeArtistVisible] = useState(true)
   const [fakeArtistLost, setFakeArtistLost] = useState<boolean>(false)
@@ -295,8 +302,6 @@ const FakeArtistAndCanvasDialog = ({
     )
     if (searchForPlayerWithFiveOrMorePoints != null) {
       setPlayerWithFiveOrMorePoints(searchForPlayerWithFiveOrMorePoints)
-      leaveGame()
-      disconnectSockets()
       return
     }
 
@@ -332,20 +337,6 @@ const FakeArtistAndCanvasDialog = ({
     return null
   }
 
-  const leaveGame = () => {
-    sendWebSocketMessage(playerSocket, {
-      action: "leaveGame",
-      gameCode: gameCode,
-      username: username,
-    })
-  }
-
-  const disconnectSockets = () => {
-    playerSocket?.close()
-    canvasWebSocket?.close()
-    setPlayerSocket(null)
-  }
-
   if (exittedDialog && !playerWithFiveOrMorePoints) {
     return (
       <Backdrop open={true} style={{ zIndex: 1300 }}>
@@ -361,6 +352,7 @@ const FakeArtistAndCanvasDialog = ({
       <WinnerDialog
         winner={playerWithFiveOrMorePoints}
         resetState={resetLocalStateAfterGame}
+        canvasWebSocket={canvasWebSocket}
       />
     )
   }
