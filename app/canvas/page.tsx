@@ -19,6 +19,7 @@ import { sendWebSocketMessage } from "@/components/canvas/utils"
 import { motion } from "framer-motion"
 import LoadingNewGame from "@/components/canvas/LoadingNewGame"
 import NoGameCodeErrorPage from "@/components/canvas/NoGameCodeErrorPage"
+import NotMemberOfGameErrorPage from "@/components/canvas/NotMemberOfGameErrorPage"
 
 const useGameCode = () => {
   const params = useSearchParams()
@@ -260,6 +261,7 @@ export default function Home() {
     role,
     playerToNumberOfOneCoins,
     playerToNumberOfTwoCoins,
+    username,
   } = useUser()
 
   const pageVariants = role
@@ -348,6 +350,10 @@ export default function Home() {
 
   if (gameCode === "") {
     return <NoGameCodeErrorPage />
+  }
+
+  if (gameCode !== "" && username === "") {
+    return <NotMemberOfGameErrorPage />
   }
 
   if (!role) {
