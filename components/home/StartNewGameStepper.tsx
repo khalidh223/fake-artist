@@ -17,6 +17,7 @@ import fetchGameCode from "@/utils/fetchGameCode"
 import { useRouter } from "next/navigation"
 import { useDrawSocket } from "../../app/DrawSocketProvider"
 import { useUser } from "@/app/UserProvider"
+import { sendWebSocketMessage } from "../canvas/utils"
 
 const StartNewGameStepper = ({
   open,
@@ -28,7 +29,6 @@ const StartNewGameStepper = ({
   const router = useRouter()
 
   const [activeStep, setActiveStep] = useState(0)
-  const [gameCode, setGameCode] = useState<string | null>(null)
   const [hasFetchedGameCode, setHasFetchedGameCode] = useState(false)
   const {
     username,
@@ -36,6 +36,8 @@ const StartNewGameStepper = ({
     playerSocket,
     setPlayerSocket,
     setConnectionId,
+    setGameCode,
+    gameCode
   } = useUser()
   const [loading, setLoading] = useState(false)
   const [players, setPlayers] = useState<string[]>([])
@@ -290,7 +292,7 @@ const DisplayGameCode = ({
   gameCode,
   players,
 }: {
-  gameCode: string | null
+  gameCode: string
   players: string[]
 }) => (
   <Box

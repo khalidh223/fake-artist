@@ -75,6 +75,8 @@ interface UserContextValue {
   allPlayersResettedRoundState: boolean
   setRole: React.Dispatch<React.SetStateAction<"FAKE_ARTIST" | "PLAYER" | "QUESTION_MASTER" | null>>
   role: "FAKE_ARTIST" | "PLAYER" | "QUESTION_MASTER" | null
+  setGameCode: React.Dispatch<React.SetStateAction<string>>
+  gameCode: string
 }
 
 const UserContext = createContext<UserContextValue | undefined>(undefined)
@@ -140,6 +142,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     const [role, setRole] = useState<
     "FAKE_ARTIST" | "PLAYER" | "QUESTION_MASTER" | null
   >(null)
+  const [gameCode, setGameCode] = useState<string>("")
 
   return (
     <UserContext.Provider
@@ -191,7 +194,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         setAllPlayersResettedRoundState,
         allPlayersResettedRoundState,
         setRole,
-        role
+        role,
+        setGameCode,
+        gameCode
       }}
     >
       {children}

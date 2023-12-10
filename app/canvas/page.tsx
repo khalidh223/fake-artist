@@ -20,6 +20,8 @@ import { motion } from "framer-motion"
 import LoadingNewGame from "@/components/canvas/LoadingNewGame"
 import NoGameCodeErrorPage from "@/components/canvas/NoGameCodeErrorPage"
 import NotMemberOfGameErrorPage from "@/components/canvas/NotMemberOfGameErrorPage"
+import SomePlayerLeftGameDialog from "@/components/canvas/SomePlayerLeftGameDialog"
+import HostEndedGameDialog from "@/components/canvas/HostEndedGameDialog"
 
 const useGameCode = () => {
   const params = useSearchParams()
@@ -64,7 +66,9 @@ const useAddEventListenerToPlayerSocket = (
     setRole: Dispatch<
       SetStateAction<"FAKE_ARTIST" | "PLAYER" | "QUESTION_MASTER" | null>
     >,
-    setPenChosen: Dispatch<SetStateAction<PenChosenData | null>>
+    setPenChosen: Dispatch<SetStateAction<PenChosenData | null>>,
+    setSomePlayerLeftGame: Dispatch<SetStateAction<boolean>>,
+    setHostEndedGame: Dispatch<SetStateAction<boolean>>
   ) => void,
   playerSocket: WebSocket | null,
   setRole: React.Dispatch<
@@ -96,7 +100,9 @@ const useAddEventListenerToPlayerSocket = (
   >,
   setAllPlayersResettedRoundState: Dispatch<SetStateAction<boolean>>,
   setQuestionMaster: Dispatch<SetStateAction<string>>,
-  allPlayersResettedRoundState: boolean
+  allPlayersResettedRoundState: boolean,
+  setSomePlayerLeftGame: Dispatch<SetStateAction<boolean>>,
+  setHostEndedGame: Dispatch<SetStateAction<boolean>>
 ) => {
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -105,6 +111,10 @@ const useAddEventListenerToPlayerSocket = (
         setPlayers(data.players)
       } else if (data.action === "roleForPlayer") {
         setRole(data.role)
+      } else if (data.action === "gameLeft") {
+        setSomePlayerLeftGame(true)
+      } else if (data.action === "gameEnded") {
+        setHostEndedGame(true)
       } else if (data.action === "setColorChosen") {
         let penChosenData: PenChosenData = {
           color: data.colorChosen,
@@ -145,7 +155,12 @@ const useAddEventListenerToPlayerSocket = (
           actualTitle: data.actualTitle,
         })
       } else if (data.action === "allPlayersResettedRoundState") {
-        resetLocalState(setRole, setPenChosen)
+        resetLocalState(
+          setRole,
+          setPenChosen,
+          setSomePlayerLeftGame,
+          setHostEndedGame
+        )
         setAllPlayersResettedRoundState(true)
       } else if (data.action === "getUsernameOfQuestionMaster") {
         setQuestionMaster(data.username)
@@ -279,12 +294,16 @@ export default function Home() {
   const pageTransition = { duration: 0.5 }
 
   const [penChosen, setPenChosen] = useState<PenChosenData | null>(null)
+  const [somePlayerLeftGame, setSomePlayerLeftGame] = useState(false)
+  const [hostEndedGame, setHostEndedGame] = useState(false)
 
   const resetLocalState = (
     setRole: Dispatch<
       SetStateAction<"FAKE_ARTIST" | "PLAYER" | "QUESTION_MASTER" | null>
     >,
-    setPenChosen: Dispatch<SetStateAction<PenChosenData | null>>
+    setPenChosen: Dispatch<SetStateAction<PenChosenData | null>>,
+    setSomePlayerLeftGame: Dispatch<SetStateAction<boolean>>,
+    setHostEndedGame: Dispatch<SetStateAction<boolean>>
   ) => {
     setRole(null)
     setHexCodeOfColorChosen(null)
@@ -306,6 +325,8 @@ export default function Home() {
       fakeArtistGuess: "",
       actualTitle: "",
     })
+    setSomePlayerLeftGame(false)
+    setHostEndedGame(false)
   }
 
   useSetAllPlayersInitialPoints(
@@ -339,7 +360,9 @@ export default function Home() {
     setFakeArtistGuessAndActualTitle,
     setAllPlayersResettedRoundState,
     setQuestionMaster,
-    allPlayersResettedRoundState
+    allPlayersResettedRoundState,
+    setSomePlayerLeftGame,
+    setHostEndedGame
   )
 
   useEffect(() => {
@@ -348,12 +371,48 @@ export default function Home() {
     }
   }, [role, allPlayersResettedRoundState])
 
+  const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    e.returnValue = "" // Required for some browsers
+    sendWebSocketMessage(playerSocket, {
+      action: "leaveGame",
+      gameCode: gameCode,
+      username: username,
+    })
+    playerSocket?.close()
+  }
+
+  useEffect(() => {
+    window.addEventListener("beforeunload", handleBeforeUnload)
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+    }
+  }, [])
+
   if (gameCode === "") {
     return <NoGameCodeErrorPage />
   }
 
   if (gameCode !== "" && username === "") {
     return <NotMemberOfGameErrorPage />
+  }
+
+  if (somePlayerLeftGame) {
+    return (
+      <SomePlayerLeftGameDialog
+        playerSocket={playerSocket}
+        setSomePlayerLeftGame={setSomePlayerLeftGame}
+      />
+    )
+  }
+
+  if (hostEndedGame) {
+    return (
+      <HostEndedGameDialog
+        playerSocket={playerSocket}
+        setHostEndedGame={setHostEndedGame}
+      />
+    )
   }
 
   if (!role) {
