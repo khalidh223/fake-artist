@@ -52,6 +52,7 @@ const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
   const [gameInProgressError, setGameInProgressError] = useState<string | null>(
     null
   )
+  const [gameFullError, setGameFullError] = useState<string | null>(null)
   const [isValidationCheckLoading, setIsValidationCheckLoading] =
     useState(false)
 
@@ -101,7 +102,8 @@ const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
       setConnectionId,
       setGameCodeInvalidError,
       setUsernameInUseError,
-      setGameInProgressError
+      setGameInProgressError,
+      setGameFullError
     )
   }, [playerSocket])
 
@@ -116,6 +118,10 @@ const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
 
     if (gameInProgressError) {
       setGameInProgressError(null)
+    }
+
+    if (gameFullError) {
+      setGameFullError(null)
     }
   }, [username, gameCode])
 
@@ -165,6 +171,7 @@ const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
       usernameInUseError,
       gameInProgressError,
       gameCodeInvalidError,
+      gameFullError,
       drawSocket,
       setPlayerSocket,
       playerSocket
@@ -172,7 +179,12 @@ const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
   }
 
   const sendLeaveGameMessage = () => {
-    if (!usernameInUseError && !gameInProgressError && !gameCodeInvalidError) {
+    if (
+      !usernameInUseError &&
+      !gameInProgressError &&
+      !gameCodeInvalidError &&
+      !gameFullError
+    ) {
       sendWebSocketMessage(playerSocket, {
         action: "leaveGame",
         gameCode: gameCode,
@@ -184,7 +196,12 @@ const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
   }
 
   const handleCloseDialog = () => {
-    if (!usernameInUseError && !gameInProgressError && !gameCodeInvalidError) {
+    if (
+      !usernameInUseError &&
+      !gameInProgressError &&
+      !gameCodeInvalidError &&
+      !gameFullError
+    ) {
       sendLeaveGameMessage()
     }
     setGameCode("")
@@ -207,6 +224,7 @@ const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
           gameCodeInvalidError={gameCodeInvalidError}
           usernameInUseError={usernameInUseError}
           gameInProgressError={gameInProgressError}
+          gameFullError={gameFullError}
         />
       </DialogContent>
       <StepperActions
@@ -220,6 +238,7 @@ const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
         usernameInUseError={usernameInUseError}
         gameCodeInvalid={gameCodeInvalidError}
         gameInProgressError={gameInProgressError}
+        gameFullError={gameFullError}
         isValidationCheckLoading={isValidationCheckLoading}
       />
     </Dialog>
@@ -253,7 +272,8 @@ const handlePlayerSocketMessages = (
   setConnectionId: React.Dispatch<React.SetStateAction<string>>,
   setGameCodeInvalidError: React.Dispatch<React.SetStateAction<string | null>>,
   setUsernameInUseError: React.Dispatch<React.SetStateAction<string | null>>,
-  setGameInProgressError: React.Dispatch<React.SetStateAction<string | null>>
+  setGameInProgressError: React.Dispatch<React.SetStateAction<string | null>>,
+  setGameFullError: React.Dispatch<React.SetStateAction<string | null>>
 ) => {
   const messageEventListener = (event: MessageEvent) => {
     const data = JSON.parse(event.data)
@@ -285,6 +305,11 @@ const handlePlayerSocketMessages = (
           "Game is already in progress, please provide a different game to join."
         )
         break
+      case "gameFull":
+        setGameFullError(
+          "Game is already full, please provide a different game to join."
+        )
+        break
       default:
         console.error(`Unhandled message action: ${data.action}`)
     }
@@ -307,6 +332,7 @@ const initiateWebSocket = (
   usernameInUseError: string | null,
   gameInProgressError: string | null,
   gameCodeInvalidError: string | null,
+  gameFullError: string | null,
   drawSocket: Socket | null,
   setPlayerSocket: React.Dispatch<React.SetStateAction<WebSocket | null>>,
   playerSocket: WebSocket | null
@@ -322,7 +348,8 @@ const initiateWebSocket = (
         username != "" &&
         usernameInUseError == null &&
         gameCodeInvalidError == null &&
-        gameInProgressError == null
+        gameInProgressError == null &&
+        gameFullError == null
       ) {
         const gameData = {
           action: "joinGame",
@@ -389,6 +416,7 @@ const DisplayContent = ({
   gameCodeInvalidError,
   usernameInUseError,
   gameInProgressError,
+  gameFullError,
 }: {
   gameEnded: boolean
   activeStep: number
@@ -399,6 +427,7 @@ const DisplayContent = ({
   gameCodeInvalidError: string | null
   usernameInUseError: string | null
   gameInProgressError: string | null
+  gameFullError: string | null
 }) => {
   if (gameEnded) return <GameEndedContent />
   if (activeStep === 0)
@@ -410,6 +439,7 @@ const DisplayContent = ({
         gameCodeInvalidError={gameCodeInvalidError}
         usernameInUseError={usernameInUseError}
         gameInProgressError={gameInProgressError}
+        gameFullError={gameFullError}
       />
     )
   return <JoiningContent players={players} />
@@ -433,6 +463,7 @@ const EnterUsernameAndGameCodeInput = ({
   gameCodeInvalidError,
   usernameInUseError,
   gameInProgressError,
+  gameFullError,
 }: {
   setGameCode: Dispatch<SetStateAction<string>>
   username: string
@@ -440,6 +471,7 @@ const EnterUsernameAndGameCodeInput = ({
   gameCodeInvalidError: string | null
   usernameInUseError: string | null
   gameInProgressError: string | null
+  gameFullError: string | null
 }) => {
   const inputProps = {
     style: {
@@ -456,7 +488,8 @@ const EnterUsernameAndGameCodeInput = ({
   const setError = (
     gameCodeInvalidError: string | null,
     usernameInUseError: string | null,
-    gameInProgressError: string | null
+    gameInProgressError: string | null,
+    gameFullError: string | null
   ): string => {
     if (gameCodeInvalidError != null) {
       return gameCodeInvalidError
@@ -464,6 +497,8 @@ const EnterUsernameAndGameCodeInput = ({
       return usernameInUseError
     } else if (gameInProgressError != null) {
       return gameInProgressError
+    } else if (gameFullError != null) {
+      return gameFullError
     } else {
       return ""
     }
@@ -472,7 +507,8 @@ const EnterUsernameAndGameCodeInput = ({
   const error = setError(
     gameCodeInvalidError,
     usernameInUseError,
-    gameInProgressError
+    gameInProgressError,
+    gameFullError
   )
 
   return (
@@ -549,6 +585,7 @@ type StepperActionsProps = {
   usernameInUseError: string | null
   gameCodeInvalid: string | null
   gameInProgressError: string | null
+  gameFullError: string | null
   isValidationCheckLoading: boolean
 }
 
@@ -563,6 +600,7 @@ const StepperActions: React.FC<StepperActionsProps> = ({
   usernameInUseError,
   gameCodeInvalid,
   gameInProgressError,
+  gameFullError,
   isValidationCheckLoading,
 }) => (
   <DialogActions sx={{ flexDirection: "column", alignItems: "center" }}>
@@ -617,7 +655,8 @@ const StepperActions: React.FC<StepperActionsProps> = ({
                 username.length === 0 ||
                 usernameInUseError != null ||
                 gameCodeInvalid != null ||
-                gameInProgressError != null
+                gameInProgressError != null ||
+                gameFullError != null
               }
             >
               {isValidationCheckLoading ? (
