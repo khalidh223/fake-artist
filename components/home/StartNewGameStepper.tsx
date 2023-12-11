@@ -385,7 +385,7 @@ const NextButton = ({
   username: string
 }) => {
   const canProceedFirstStep = username.trim()
-  const canProceedSecondStep = username.trim() && players.length >= 5
+  const canProceedSecondStep = username.trim() && players.length >= 5 && players.length <= 10
   return (
     <Button
       size="small"
