@@ -11,6 +11,7 @@ import {
   Box,
   TextField,
   CircularProgress,
+  Tooltip,
 } from "@mui/material"
 import CloseIcon from "@mui/icons-material/Close"
 import fetchGameCode from "@/utils/fetchGameCode"
@@ -37,7 +38,7 @@ const StartNewGameStepper = ({
     setPlayerSocket,
     setConnectionId,
     setGameCode,
-    gameCode
+    gameCode,
   } = useUser()
   const [loading, setLoading] = useState(false)
   const [players, setPlayers] = useState<string[]>([])
@@ -139,7 +140,7 @@ const StartNewGameStepper = ({
     sendWebSocketMessage(playerSocket, {
       action: "updateGameInProgressStatus",
       gameCode,
-      isInProgress: true
+      isInProgress: true,
     })
   }
 
@@ -385,26 +386,34 @@ const NextButton = ({
   username: string
 }) => {
   const canProceedFirstStep = username.trim()
-  const canProceedSecondStep = username.trim() && players.length >= 5 && players.length <= 10
-  return (
+  const canProceedSecondStep = username.trim() && players.length >= 5
+  const isLastStep = activeStep === 1
+  const isDisabled =
+    (activeStep === 0 && !canProceedFirstStep) ||
+    (activeStep === 1 && !canProceedSecondStep)
+
+  const button = (
     <Button
       size="small"
       onClick={onClick}
-      disabled={
-        (activeStep === 0 && !canProceedFirstStep) ||
-        (activeStep === 1 && !canProceedSecondStep)
-      }
+      disabled={isDisabled}
       sx={{
-        color:
-          (activeStep === 0 && canProceedFirstStep) ||
-          (activeStep === 1 && canProceedSecondStep)
-            ? "#fff"
-            : "rgba(255, 255, 255, 0.38)",
+        color: !isDisabled ? "#fff" : "rgba(255, 255, 255, 0.38)",
       }}
     >
-      Next
+      {isLastStep ? "Start!" : "Next"}
     </Button>
   )
+
+  if (isLastStep && players.length < 5) {
+    return (
+      <Tooltip title="Need at least 5 players to start!">
+        <span>{button}</span>
+      </Tooltip>
+    )
+  }
+
+  return button
 }
 
 export default StartNewGameStepper
