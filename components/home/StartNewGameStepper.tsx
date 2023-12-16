@@ -11,6 +11,7 @@ import {
   Box,
   TextField,
   CircularProgress,
+  Tooltip,
 } from "@mui/material"
 import CloseIcon from "@mui/icons-material/Close"
 import fetchGameCode from "@/utils/fetchGameCode"
@@ -30,6 +31,8 @@ const StartNewGameStepper = ({
 
   const [activeStep, setActiveStep] = useState(0)
   const [hasFetchedGameCode, setHasFetchedGameCode] = useState(false)
+  const [isStartingGame, setIsStartingGame] = useState(false)
+
   const {
     username,
     setUsername,
@@ -37,7 +40,7 @@ const StartNewGameStepper = ({
     setPlayerSocket,
     setConnectionId,
     setGameCode,
-    gameCode
+    gameCode,
   } = useUser()
   const [loading, setLoading] = useState(false)
   const [players, setPlayers] = useState<string[]>([])
@@ -139,7 +142,7 @@ const StartNewGameStepper = ({
     sendWebSocketMessage(playerSocket, {
       action: "updateGameInProgressStatus",
       gameCode,
-      isInProgress: true
+      isInProgress: true,
     })
   }
 
@@ -178,6 +181,7 @@ const StartNewGameStepper = ({
       setHasFetchedGameCode(false)
     }
     if (activeStep === 1) {
+      setIsStartingGame(true)
       startGame()
     }
     setActiveStep(activeStep + 1)
@@ -224,6 +228,7 @@ const StartNewGameStepper = ({
           resetStates={resetStates}
           players={players}
           nextButtonOnClick={nextButtonOnClick}
+          isStartingGame={isStartingGame}
         />
       </Dialog>
     </div>
@@ -330,12 +335,14 @@ const StepperActions = ({
   resetStates,
   players,
   nextButtonOnClick,
+  isStartingGame,
 }: {
   activeStep: number
   username: string
   resetStates: () => void
   players: string[]
   nextButtonOnClick: () => void
+  isStartingGame: boolean
 }) => (
   <DialogActions sx={{ flexDirection: "column", alignItems: "center" }}>
     <MobileStepper
@@ -350,6 +357,7 @@ const StepperActions = ({
           onClick={nextButtonOnClick}
           players={players}
           username={username}
+          isStartingGame={isStartingGame}
         />
       }
     />
@@ -378,33 +386,52 @@ const NextButton = ({
   onClick,
   players,
   username,
+  isStartingGame,
 }: {
   activeStep: number
   onClick: () => void
   players: string[]
   username: string
+  isStartingGame: boolean
 }) => {
   const canProceedFirstStep = username.trim()
-  const canProceedSecondStep = username.trim() && players.length >= 5 && players.length <= 10
-  return (
+  const canProceedSecondStep = username.trim() && players.length >= 5
+  const isLastStep = activeStep >= 1
+  const isDisabled =
+    (activeStep === 0 && !canProceedFirstStep) ||
+    (activeStep === 1 && !canProceedSecondStep)
+
+  const buttonContent = isStartingGame ? (
+    <CircularProgress size={24} sx={{ color: '#fff' }} />
+  ) : isLastStep ? (
+    "Start!"
+  ) : (
+    "Next"
+  )
+
+  const button = (
     <Button
       size="small"
       onClick={onClick}
-      disabled={
-        (activeStep === 0 && !canProceedFirstStep) ||
-        (activeStep === 1 && !canProceedSecondStep)
-      }
+      disabled={isDisabled || isStartingGame}
       sx={{
         color:
-          (activeStep === 0 && canProceedFirstStep) ||
-          (activeStep === 1 && canProceedSecondStep)
-            ? "#fff"
-            : "rgba(255, 255, 255, 0.38)",
+          !isDisabled && !isStartingGame ? "#fff" : "rgba(255, 255, 255, 0.38)",
       }}
     >
-      Next
+      {buttonContent}
     </Button>
   )
+
+  if (isLastStep && players.length < 5) {
+    return (
+      <Tooltip title="Need at least 5 players to start!">
+        <span>{button}</span>
+      </Tooltip>
+    )
+  }
+
+  return button
 }
 
 export default StartNewGameStepper
