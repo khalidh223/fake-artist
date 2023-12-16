@@ -387,7 +387,7 @@ const NextButton = ({
 }) => {
   const canProceedFirstStep = username.trim()
   const canProceedSecondStep = username.trim() && players.length >= 5
-  const isLastStep = activeStep === 1
+  const isLastStep = activeStep >= 1
   const isDisabled =
     (activeStep === 0 && !canProceedFirstStep) ||
     (activeStep === 1 && !canProceedSecondStep)
