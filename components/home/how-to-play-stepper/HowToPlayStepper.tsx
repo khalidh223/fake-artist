@@ -19,6 +19,7 @@ import LionAnimation from "./step-5-lion-animation/LionAnimation"
 import QMCountDown from "./step-6-qm-count-down/QMCountDown"
 import FadeInFakeArtist from "./step-7-fade-in-fake-artist/FadeInFakeArtist"
 import PointsDistributionImage from "./step-8-point-distribution/PointsDistributionImage"
+import CoinsImage from "./step-9-coins-image/CoinsImage"
 
 // Types for steps
 interface StepData {
@@ -73,8 +74,13 @@ const steps: StepData[] = [
   },
   {
     description:
-      "This is how points are distributed between artists. The first player to reach 5 points wins!",
+      "This is how points are distributed between artists.",
     content: <PointsDistributionImage />,
+  },
+  {
+    description:
+      "To begin the next round, another random artist is chosen as the Question Master. The first artist to earn 5 points wins the game!",
+    content: <CoinsImage />,
   },
 ]
 
