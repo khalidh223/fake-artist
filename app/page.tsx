@@ -6,8 +6,9 @@ import { useUser } from "./UserProvider"
 import { useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { sendWebSocketMessage } from "@/components/canvas/utils"
-import { useSearchParams } from "next/navigation"
 import { Link, Typography } from "@mui/material"
+import { APP_VERSION } from "@/version";
+
 
 export default function Home() {
   const { playerSocket, setPlayerSocket, role, username, gameCode } = useUser()
@@ -82,7 +83,7 @@ export default function Home() {
             marginTop={"-4em"}
           >
             <Typography color={"#F20A7E"} fontWeight={"bold"}>
-              Made by{" "}
+              v{APP_VERSION} {" "} | {" "}Made by{" "}
               <Link
                 color={"#F20A7E"}
                 href="https://github.com/khalidh223"
