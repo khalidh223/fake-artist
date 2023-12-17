@@ -25,7 +25,7 @@ import HostEndedGameDialog from "@/components/canvas/HostEndedGameDialog"
 
 const useGameCode = () => {
   const params = useSearchParams()
-  return params.get("gameCode") || ""
+  return params?.get("gameCode") || ""
 }
 
 const useWebSocket = (url: string) => {
