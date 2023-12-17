@@ -3,15 +3,27 @@
 import Box from "@mui/material/Box"
 import HomeButtons from "@/components/home/HomeButtons"
 import { useUser } from "./UserProvider"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { sendWebSocketMessage } from "@/components/canvas/utils"
-import { Link, Typography } from "@mui/material"
-import { APP_VERSION } from "@/version";
-
+import { Link, Typography, useMediaQuery, useTheme } from "@mui/material"
+import { APP_VERSION } from "@/version"
+import MobileComingSoonAd from "@/components/MobileComingSoonAd"
+import styles from "./mobile_ad.module.css"
 
 export default function Home() {
   const { playerSocket, setPlayerSocket, role, username, gameCode } = useUser()
+  const [renderMobileAd, setRenderMobileAd] = useState(false)
+
+  useEffect(() => {
+    const isMobile =
+      /mobile|android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/.test(
+        navigator.userAgent.toLowerCase()
+      )
+    if (isMobile) {
+      setRenderMobileAd(true)
+    }
+  }, [])
 
   useEffect(() => {
     if (!playerSocket) {
@@ -49,6 +61,10 @@ export default function Home() {
     exit: { opacity: 0, transition: { duration: 0.5 } },
   }
 
+  if (renderMobileAd) {
+    return <MobileComingSoonAd />
+  }
+
   return (
     <AnimatePresence>
       {!role && (
@@ -83,7 +99,7 @@ export default function Home() {
             marginTop={"-4em"}
           >
             <Typography color={"#F20A7E"} fontWeight={"bold"}>
-              v{APP_VERSION} {" "} | {" "}Made by{" "}
+              v{APP_VERSION} | Made by{" "}
               <Link
                 color={"#F20A7E"}
                 href="https://github.com/khalidh223"
