@@ -122,7 +122,7 @@ const DrawCanvas = ({
 
 const useGameCode = (): string => {
   const params = useSearchParams()
-  return params.get("gameCode") || ""
+  return params?.get("gameCode") || ""
 }
 
 const setupSocketListeners = (

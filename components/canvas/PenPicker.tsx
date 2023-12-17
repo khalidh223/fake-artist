@@ -173,7 +173,7 @@ const getMarginLeft = (color: string) => {
 
 const useGameCode = () => {
   const params = useSearchParams()
-  return params.get("gameCode") || ""
+  return params?.get("gameCode") || ""
 }
 
 export default PenPicker
