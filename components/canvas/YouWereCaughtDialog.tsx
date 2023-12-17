@@ -1,6 +1,5 @@
 "use client"
 
-import { useUser } from "@/app/UserProvider"
 import {
   Box,
   Button,
@@ -19,6 +18,21 @@ const YouWereCaughtDialog = ({
   gameCode: string
 }) => {
   const [title, setTitle] = useState("")
+
+  const capitalizeAndOneWord = (input: string) => {
+    const words = input.split(/\s+/) // Split by any whitespace
+    if (words.length > 0) {
+      const firstWord = words[0]
+      return (
+        firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase()
+      )
+    }
+    return ""
+  }
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(capitalizeAndOneWord(e.target.value))
+  }
 
   const handleSubmitTitle = () => {
     sendWebSocketMessage(canvasWebSocket, {
@@ -62,7 +76,7 @@ const YouWereCaughtDialog = ({
                 variant="standard"
                 placeholder="Title"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={handleTitleChange}
               />
             </Box>
           </Box>

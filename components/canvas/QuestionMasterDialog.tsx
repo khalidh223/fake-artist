@@ -36,7 +36,7 @@ const QuestionMasterDialog = ({
     setExittedTitleCard,
     themeChosenByQuestionMaster,
     titleChosenByQuestionMaster,
-    currentPlayerDrawing
+    currentPlayerDrawing,
   } = useUser()
 
   const isDoneDisabled = !theme.trim() || !title.trim()
@@ -83,6 +83,25 @@ const QuestionMasterDialog = ({
     }
   }
 
+  const capitalizeAndOneWord = (input: string) => {
+    const words = input.split(/\s+/) // Split by any whitespace
+    if (words.length > 0) {
+      const firstWord = words[0]
+      return (
+        firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase()
+      )
+    }
+    return ""
+  }
+
+  const handleThemeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTheme(capitalizeAndOneWord(e.target.value))
+  }
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(capitalizeAndOneWord(e.target.value))
+  }
+
   return (
     <>
       <Dialog open={isOpen}>
@@ -110,7 +129,7 @@ const QuestionMasterDialog = ({
                 variant="standard"
                 placeholder="Animals"
                 value={theme}
-                onChange={(e) => setTheme(e.target.value)}
+                onChange={handleThemeChange}
               />
             </Box>
             <Box width="45%">
@@ -122,7 +141,7 @@ const QuestionMasterDialog = ({
                 variant="standard"
                 placeholder="Lion"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={handleTitleChange}
               />
             </Box>
           </Box>
