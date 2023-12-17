@@ -7,6 +7,7 @@ import { useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { sendWebSocketMessage } from "@/components/canvas/utils"
 import { useSearchParams } from "next/navigation"
+import { Link, Typography } from "@mui/material"
 
 export default function Home() {
   const { playerSocket, setPlayerSocket, role, username, gameCode } = useUser()
@@ -72,6 +73,32 @@ export default function Home() {
               />
               <HomeButtons />
             </Box>
+          </Box>
+          <Box
+            display={"flex"}
+            flexDirection={"column"}
+            justifyContent={"center"}
+            alignItems={"center"}
+            marginTop={"-4em"}
+          >
+            <Typography color={"#F20A7E"} fontWeight={"bold"}>
+              Made by{" "}
+              <Link
+                color={"#F20A7E"}
+                href="https://github.com/khalidh223"
+                sx={{ textDecoration: "underline" }}
+              >
+                khalidh223
+              </Link>{" "}
+              | Issues? Suggestions? Submit them{" "}
+              <Link
+                color={"#F20A7E"}
+                href="/feedback"
+                sx={{ textDecoration: "underline" }}
+              >
+                here!
+              </Link>
+            </Typography>
           </Box>
         </motion.div>
       )}
