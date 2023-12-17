@@ -16,6 +16,9 @@ export default async function handler(
       description: string
     }
 
+    console.log('email: ', process.env.OUTLOOK_EMAIL)
+    console.log('pass: ', process.env.OUTLOOK_PASSWORD)
+
     if (feedbackType === "comment") {
       try {
         const transporter = nodemailer.createTransport({
