@@ -24,11 +24,13 @@ export default function Feedback() {
   })
   const [loading, setLoading] = useState<boolean>(false)
   const [showSuccess, setShowSuccess] = useState<boolean>(false)
+  const [error, setError] = useState<string>("")
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
     setShowSuccess(false)
+    setError("")
 
     if (feedback.feedbackType === "issue") {
       try {
@@ -50,9 +52,11 @@ export default function Feedback() {
           setFeedback({ feedbackType: "", description: "" }) // Reset form
         } else {
           console.error("Error creating issue: ", result.message)
+          setError("Failed to send issue, please try again later.")
         }
       } catch (error) {
         console.error("Network or other error", error)
+        setError("Failed to send issue, please try again later.")
       }
     } else {
       try {
@@ -74,9 +78,11 @@ export default function Feedback() {
           setFeedback({ feedbackType: "", description: "" })
         } else {
           console.error("Error creating issue: ", result.message)
+          setError("Failed to send comment, please try again later.")
         }
       } catch (error) {
         console.error("Network or other error", error)
+        setError("Failed to send comment, please try again later.")
       }
     }
 
@@ -142,6 +148,12 @@ export default function Feedback() {
         {showSuccess && (
           <Alert severity="success" sx={{ mt: 2 }}>
             Thank you for your feedback!
+          </Alert>
+        )}
+
+        {error && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {error}
           </Alert>
         )}
       </form>

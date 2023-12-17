@@ -11,7 +11,6 @@ export default async function handler(
 ) {
   if (req.method === "POST") {
     const { title, description } = req.body as IssueData
-    console.log('token: ', process.env.GITHUB_TOKEN)
     const githubResponse = await fetch(
       "https://api.github.com/repos/khalidh223/fake-artist/issues",
       {
