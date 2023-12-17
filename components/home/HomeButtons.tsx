@@ -1,5 +1,5 @@
 "use client"
-import { Button, Stack, styled } from "@mui/material"
+import { Box, Button, Link, Stack, Typography, styled } from "@mui/material"
 import React, { useState } from "react"
 import StartNewGameStepper from "./StartNewGameStepper"
 import JoinGameStepper from "./JoinGameStepper"
@@ -17,7 +17,7 @@ const HomeButtons = () => {
   const [dialogNewGameOpen, setNewGameDialogOpen] = useState(false)
   const [dialogJoinGameOpen, setJoinGameDialogOpen] = useState(false)
   const [dialogHowToPlayOpen, setHowToPlayDialogOpen] = useState(false)
-  
+
   const handleHowToPlayOpenDialog = () => {
     setHowToPlayDialogOpen(true)
   }
@@ -25,7 +25,7 @@ const HomeButtons = () => {
   const handleHowToPlayCloseDialog = () => {
     setHowToPlayDialogOpen(false)
   }
-  
+
   const handleNewGameOpenDialog = () => {
     setNewGameDialogOpen(true)
   }
