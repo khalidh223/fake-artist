@@ -235,15 +235,21 @@ const setupCanvasListeners = (
     lastCoords.current = { x: event.offsetX, y: event.offsetY }
   }
 
+  const onMouseLeave = () => {
+    drawingRef.current = false;
+  }
+
   canvas.addEventListener("mousedown", onMouseDown)
   canvas.addEventListener("mouseup", stopDrawing)
   canvas.addEventListener("mousemove", onMouseMove)
+  canvas.addEventListener("mouseleave", onMouseLeave)
 
   return () => {
     if (canvas) {
       canvas.removeEventListener("mousedown", onMouseDown)
       canvas.removeEventListener("mouseup", stopDrawing)
       canvas.removeEventListener("mousemove", onMouseMove)
+      canvas.removeEventListener("mouseleave", onMouseLeave)
     }
   }
 }
