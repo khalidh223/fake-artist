@@ -14,3 +14,8 @@ export const sendWebSocketMessage = (socket: WebSocket | null, data: object) => 
     }
   }
 }
+
+export interface OptionType {
+  label: string
+  value: string
+}
