@@ -1,10 +1,9 @@
-// AnimatedSVG.tsx
 import React, { useEffect, useRef } from "react"
 import Box from "@mui/material/Box"
 
 interface AnimatedSVGProps {
   svg: JSX.Element
-  duration?: number // duration of the animation in seconds
+  duration?: number
   onAnimationEnd?: () => void
   nudgeRight: string | null
   nudgeDown: string | null
@@ -28,7 +27,6 @@ const AnimatedSVG: React.FC<AnimatedSVGProps> = ({
       lastPath.style.strokeDashoffset = `${length}`
       lastPath.style.animation = `draw ${duration}s forwards`
 
-      // Set up the animation end listener
       const onEnd = () => {
         onAnimationEnd?.()
         lastPath.removeEventListener("animationend", onEnd)

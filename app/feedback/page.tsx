@@ -49,7 +49,7 @@ export default function Feedback() {
 
         if (response.ok) {
           setShowSuccess(true)
-          setFeedback({ feedbackType: "", description: "" }) // Reset form
+          setFeedback({ feedbackType: "", description: "" })
         } else {
           console.error("Error creating issue: ", result.message)
           setError("Failed to send issue, please try again later.")

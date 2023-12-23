@@ -1,4 +1,3 @@
-// pages/api/sendEmail.ts
 import type { NextApiRequest, NextApiResponse } from "next"
 import nodemailer from "nodemailer"
 
@@ -21,10 +20,10 @@ export default async function handler(
         const transporter = nodemailer.createTransport({
           host: "smtp-mail.outlook.com",
           port: 587,
-          secure: false, // true for 465, false for other ports
+          secure: false,
           auth: {
-            user: process.env.OUTLOOK_EMAIL, // Your Outlook email address
-            pass: process.env.OUTLOOK_PASSWORD, // Your Outlook password
+            user: process.env.OUTLOOK_EMAIL,
+            pass: process.env.OUTLOOK_PASSWORD,
           },
           tls: {
             ciphers: "SSLv3",
@@ -32,8 +31,8 @@ export default async function handler(
         })
 
         const mailOptions = {
-          from: process.env.OUTLOOK_EMAIL, // Sender address
-          to: "khalidhussain4656@gmail.com", // Receiver address
+          from: process.env.OUTLOOK_EMAIL,
+          to: "khalidhussain4656@gmail.com",
           subject: "New General Comment From Fake Artist App",
           text: description,
         }

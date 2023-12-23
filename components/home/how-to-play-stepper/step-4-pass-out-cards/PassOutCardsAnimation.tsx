@@ -16,7 +16,6 @@ const FlipCard: React.FC<FlipCardProps> = ({
 }) => {
   const [flipped, setFlipped] = useState(false)
 
-  // Trigger the flip after the slide-in animation
   useEffect(() => {
     const flipTimer = setTimeout(() => setFlipped(true), 3000)
     return () => clearTimeout(flipTimer)

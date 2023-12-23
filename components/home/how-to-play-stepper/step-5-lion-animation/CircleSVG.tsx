@@ -1,4 +1,3 @@
-// MySVG.tsx
 import React from "react"
 
 const CircleSVG: React.FC = () => (

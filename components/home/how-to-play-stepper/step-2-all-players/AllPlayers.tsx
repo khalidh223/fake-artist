@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react"
 
-// Define the props for the image paths
 interface AnimatedImagesProps {
-  imagePaths: string[] // Paths to the 5 images to be displayed in the row
-  bottomImagePath: string // Path to the image to be displayed below
+  imagePaths: string[]
+  bottomImagePath: string
 }
 
 const AllPlayers: React.FC<AnimatedImagesProps> = ({
@@ -17,14 +16,13 @@ const AllPlayers: React.FC<AnimatedImagesProps> = ({
     if (currentImageIndex < imagePaths.length) {
       const timer = setTimeout(() => {
         setCurrentImageIndex(currentImageIndex + 1)
-      }, 400) // Change 1000 to the desired interval between fades
+      }, 400)
 
       return () => clearTimeout(timer)
     } else {
-      // After the last image in the row fades in, fade in the bottom image
       const timer = setTimeout(() => {
         setBottomImageVisible(true)
-      }, 200) // Delay before the bottom image fades in
+      }, 200)
 
       return () => clearTimeout(timer)
     }

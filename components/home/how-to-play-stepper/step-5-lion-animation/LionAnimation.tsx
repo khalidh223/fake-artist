@@ -115,7 +115,7 @@ const LionAnimation = () => {
         alt="Player 3"
         sx={{
           position: "absolute",
-          bottom: 10, // Adjust for bottom position
+          bottom: 10,
           left: 10,
           height: "93px",
           width: "56px",
@@ -124,11 +124,11 @@ const LionAnimation = () => {
       <Box
         sx={{
           position: "absolute",
-          bottom: "0px", // Position at the very bottom of the image
+          bottom: "0px",
           left: 10,
           height: "10px",
           width: "56px",
-          backgroundColor: "green", // Green color for the line
+          backgroundColor: "green",
         }}
       />
 
