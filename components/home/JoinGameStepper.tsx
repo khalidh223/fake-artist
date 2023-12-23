@@ -83,7 +83,7 @@ const JoinGameStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedUsername(username)
-    }, 500) // 500 milliseconds delay
+    }, 500)
 
     return () => {
       clearTimeout(handler)

@@ -36,7 +36,7 @@ export default function Home() {
   }, [])
 
   const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-    e.returnValue = "" // Required for some browsers
+    e.returnValue = ""
     if (gameCode != "" && username != "") {
       sendWebSocketMessage(playerSocket, {
         action: "leaveGame",

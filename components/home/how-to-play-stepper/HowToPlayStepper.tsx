@@ -21,13 +21,11 @@ import FadeInFakeArtist from "./step-7-fade-in-fake-artist/FadeInFakeArtist"
 import PointsDistributionImage from "./step-8-point-distribution/PointsDistributionImage"
 import CoinsImage from "./step-9-coins-image/CoinsImage"
 
-// Types for steps
 interface StepData {
   description: string | null
   content: React.ReactElement | null
 }
 
-// Steps data
 const steps: StepData[] = [
   {
     description: "Here are the different types of artists.",
@@ -92,7 +90,7 @@ const HowToPlayStepper: React.FC<{ open: boolean; onClose: () => void }> = ({
 
   const handleNext = () => {
     if (activeStep === steps.length - 1) {
-      onClose() // Close the stepper on the last step
+      onClose()
     } else {
       setActiveStep((prevActiveStep) => prevActiveStep + 1)
     }

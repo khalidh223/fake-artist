@@ -7,11 +7,11 @@ import {
   Button,
   Dialog,
   DialogContent,
-  TextField,
   Typography,
 } from "@mui/material"
 import React, { useEffect, useState } from "react"
-import { sendWebSocketMessage } from "./utils"
+import { OptionType, sendWebSocketMessage } from "./utils"
+import WordSearchSelect from "./WordSearchSelect"
 
 const QuestionMasterDialog = ({
   gameCode,
@@ -22,6 +22,12 @@ const QuestionMasterDialog = ({
 }) => {
   const [theme, setTheme] = useState("")
   const [title, setTitle] = useState("")
+  const [selectedTheme, setSelectedTheme] = useState<OptionType | undefined>(
+    undefined
+  )
+  const [selectedTitle, setSelectedTitle] = useState<OptionType | undefined>(
+    undefined
+  )
   const [isOpen, setIsOpen] = useState(true)
   const [isBackDropOpen, setIsBackDropOpen] = useState(false)
 
@@ -83,30 +89,26 @@ const QuestionMasterDialog = ({
     }
   }
 
-  const capitalizeAndOneWord = (input: string) => {
-    const words = input.split(/\s+/) // Split by any whitespace
-    if (words.length > 0) {
-      const firstWord = words[0]
-      return (
-        firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase()
-      )
-    }
-    return ""
+  const handleThemeSelectChange = (option: OptionType | null) => {
+    setSelectedTheme(option ?? undefined)
+    setTheme(option ? option.value : "")
   }
 
-  const handleThemeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTheme(capitalizeAndOneWord(e.target.value))
-  }
-
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(capitalizeAndOneWord(e.target.value))
+  const handleTitleSelectChange = (option: OptionType | null) => {
+    setSelectedTitle(option ?? undefined)
+    setTitle(option ? option.value : "")
   }
 
   return (
     <>
-      <Dialog open={isOpen}>
+      <Dialog open={isOpen} PaperProps={{ style: { overflowY: "visible" } }}>
         <DialogContent
-          sx={{ textAlign: "center", minWidth: "400px", paddingBottom: 1 }}
+          sx={{
+            textAlign: "center",
+            minWidth: "400px",
+            paddingBottom: 1,
+            overflowY: "visible",
+          }}
         >
           <Typography variant="h6" fontWeight="bold">
             You are the Question Master!
@@ -124,24 +126,20 @@ const QuestionMasterDialog = ({
               <Box marginLeft={"-1em"} marginBottom={"0.2em"}>
                 <Typography variant="body2">① What is your theme?</Typography>
               </Box>
-              <TextField
-                fullWidth
-                variant="standard"
-                placeholder="Animals"
-                value={theme}
-                onChange={handleThemeChange}
+              <WordSearchSelect
+                placeholder="Animal"
+                onChange={handleThemeSelectChange}
+                value={selectedTheme}
               />
             </Box>
             <Box width="45%">
               <Box marginLeft={"-2em"} marginBottom={"0.2em"}>
                 <Typography variant="body2">② What is your title?</Typography>
               </Box>
-              <TextField
-                fullWidth
-                variant="standard"
+              <WordSearchSelect
                 placeholder="Lion"
-                value={title}
-                onChange={handleTitleChange}
+                onChange={handleTitleSelectChange}
+                value={selectedTitle}
               />
             </Box>
           </Box>

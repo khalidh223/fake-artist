@@ -15,7 +15,7 @@ const CanvasImageDisplay: React.FC<CanvasImageDisplayProps> = ({ imageDataUrl })
 
       image.onload = () => {
         if (context) {
-          context.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before drawing the new image
+          context.clearRect(0, 0, canvas.width, canvas.height);
           context.drawImage(image, 0, 0, canvas.width, canvas.height);
         }
       };

@@ -14,7 +14,7 @@ const ImageSlider: React.FC<{ images: ImageArray }> = ({ images }) => {
   useEffect(() => {
     const intervalId = setInterval(() => {
       setCurrentImageIndex((currentIndex) => (currentIndex + 1) % images.length)
-    }, 1500) // Adjust interval for faster/slower transitions
+    }, 1500)
 
     return () => clearInterval(intervalId)
   }, [images.length])
@@ -31,13 +31,10 @@ const ImageSlider: React.FC<{ images: ImageArray }> = ({ images }) => {
       {images.map((image, index) => {
         let transform
         if (index === currentImageIndex) {
-          // Center the current image
           transform = "translate(-50%, -50%)"
         } else if (index === (currentImageIndex + 1) % images.length) {
-          // Position the next image off-screen to the left
           transform = "translate(-150%, -50%)"
         } else {
-          // Position all other images off-screen to the right
           transform = "translate(50%, -50%)"
         }
 

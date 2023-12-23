@@ -372,7 +372,7 @@ export default function Home() {
   }, [role, allPlayersResettedRoundState])
 
   const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-    e.returnValue = "" // Required for some browsers
+    e.returnValue = ""
     sendWebSocketMessage(playerSocket, {
       action: "leaveGame",
       gameCode: gameCode,

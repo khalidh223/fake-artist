@@ -5,7 +5,6 @@ import Typography from "@mui/material/Typography"
 import { pink, blue, grey } from "@mui/material/colors"
 import { Box } from "@mui/material"
 
-// Define the role information type
 interface RoleInfo {
   color: string
   title: string

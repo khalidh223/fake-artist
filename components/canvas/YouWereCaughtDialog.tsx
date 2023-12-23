@@ -1,14 +1,9 @@
 "use client"
 
-import {
-  Box,
-  Button,
-  DialogContent,
-  TextField,
-  Typography,
-} from "@mui/material"
+import { Box, Button, DialogContent, Typography } from "@mui/material"
 import React, { useState } from "react"
-import { sendWebSocketMessage } from "./utils"
+import { OptionType, sendWebSocketMessage } from "./utils"
+import WordSearchSelect from "./WordSearchSelect"
 
 const YouWereCaughtDialog = ({
   canvasWebSocket,
@@ -18,20 +13,13 @@ const YouWereCaughtDialog = ({
   gameCode: string
 }) => {
   const [title, setTitle] = useState("")
+  const [selectedTitle, setSelectedTitle] = useState<OptionType | undefined>(
+    undefined
+  )
 
-  const capitalizeAndOneWord = (input: string) => {
-    const words = input.split(/\s+/) // Split by any whitespace
-    if (words.length > 0) {
-      const firstWord = words[0]
-      return (
-        firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase()
-      )
-    }
-    return ""
-  }
-
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(capitalizeAndOneWord(e.target.value))
+  const handleTitleSelectChange = (option: OptionType | null) => {
+    setSelectedTitle(option ?? undefined)
+    setTitle(option ? option.value : "")
   }
 
   const handleSubmitTitle = () => {
@@ -50,8 +38,9 @@ const YouWereCaughtDialog = ({
       paddingRight={4}
       width={"40em"}
       height={"24em"}
+      sx={{ overflowY: "visible" }}
     >
-      <DialogContent>
+      <DialogContent sx={{ overflowY: "visible" }}>
         <Box
           display="flex"
           flexDirection="column"
@@ -71,12 +60,11 @@ const YouWereCaughtDialog = ({
           </Box>
           <Box display={"flex"} flexDirection={"row"} gap={2}>
             <Typography variant="body1">What is the title?</Typography>
-            <Box marginTop={"-3px"}>
-              <TextField
-                variant="standard"
+            <Box marginTop={"-8px"} width={"15em"}>
+              <WordSearchSelect
                 placeholder="Title"
-                value={title}
-                onChange={handleTitleChange}
+                onChange={handleTitleSelectChange}
+                value={selectedTitle}
               />
             </Box>
           </Box>
